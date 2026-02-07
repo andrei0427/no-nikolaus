@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DriveTimeResult } from '../types';
 import { TERMINALS } from '../utils/constants';
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 60 * 1000; // 1 minute - shorter for active driving
+const REFRESH_INTERVAL = 60 * 1000; // Refresh every minute
 
 interface CacheEntry {
   cirkewwa: number | null;
@@ -23,6 +24,50 @@ export function useDriveTime(
 
   const cacheRef = useRef<CacheEntry | null>(null);
   const lastCoordsRef = useRef<{ lat: number; lon: number } | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Calculate drive times using straight-line distance estimation
+  const calculateDriveTimes = useCallback(
+    (lat: number, lon: number) => {
+      const estimateDriveTime = (destLat: number, destLon: number): number => {
+        // Haversine distance
+        const R = 6371; // Earth's radius in km
+        const dLat = ((destLat - lat) * Math.PI) / 180;
+        const dLon = ((destLon - lon) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((lat * Math.PI) / 180) *
+            Math.cos((destLat * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distanceKm = R * c;
+
+        // Estimate driving time: assume average 40 km/h due to Malta's roads
+        // Add 1.3x factor for road winding
+        const drivingTimeMinutes = ((distanceKm * 1.3) / 40) * 60;
+
+        return Math.round(drivingTimeMinutes);
+      };
+
+      return {
+        cirkewwa: estimateDriveTime(TERMINALS.cirkewwa.lat, TERMINALS.cirkewwa.lon),
+        mgarr: estimateDriveTime(TERMINALS.mgarr.lat, TERMINALS.mgarr.lon),
+      };
+    },
+    []
+  );
+
+  // Periodic refresh every minute to keep predictions accurate while driving
+  useEffect(() => {
+    if (userLat === null || userLon === null) return;
+
+    const intervalId = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(intervalId);
+  }, [userLat, userLon]);
 
   useEffect(() => {
     if (userLat === null || userLon === null) {
@@ -35,11 +80,11 @@ export function useDriveTime(
       return;
     }
 
-    // Check if coordinates have changed significantly (more than ~500m)
+    // Check if coordinates have changed significantly (more than ~100m for better responsiveness)
     const coordsChanged =
       !lastCoordsRef.current ||
-      Math.abs(lastCoordsRef.current.lat - userLat) > 0.005 ||
-      Math.abs(lastCoordsRef.current.lon - userLon) > 0.005;
+      Math.abs(lastCoordsRef.current.lat - userLat) > 0.001 ||
+      Math.abs(lastCoordsRef.current.lon - userLon) > 0.001;
 
     // Check cache validity
     if (
@@ -47,63 +92,26 @@ export function useDriveTime(
       !coordsChanged &&
       Date.now() - cacheRef.current.timestamp < CACHE_DURATION
     ) {
-      setResult({
-        cirkewwa: cacheRef.current.cirkewwa,
-        mgarr: cacheRef.current.mgarr,
-        loading: false,
-        error: null,
-      });
-      return;
+      return; // Use cached result, no update needed
     }
 
     lastCoordsRef.current = { lat: userLat, lon: userLon };
-    setResult((prev) => ({ ...prev, loading: true, error: null }));
 
-    // Calculate drive times using straight-line distance estimation
-    // This avoids requiring an external API key
-    const estimateDriveTime = (destLat: number, destLon: number): number => {
-      // Haversine distance
-      const R = 6371; // Earth's radius in km
-      const dLat = ((destLat - userLat) * Math.PI) / 180;
-      const dLon = ((destLon - userLon) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((userLat * Math.PI) / 180) *
-          Math.cos((destLat * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distanceKm = R * c;
-
-      // Estimate driving time: assume average 40 km/h due to Malta's roads
-      // Add 1.3x factor for road winding
-      const drivingTimeMinutes = (distanceKm * 1.3) / 40 * 60;
-
-      return Math.round(drivingTimeMinutes);
-    };
-
-    const cirkewwaTime = estimateDriveTime(
-      TERMINALS.cirkewwa.lat,
-      TERMINALS.cirkewwa.lon
-    );
-    const mgarrTime = estimateDriveTime(
-      TERMINALS.mgarr.lat,
-      TERMINALS.mgarr.lon
-    );
+    const times = calculateDriveTimes(userLat, userLon);
 
     cacheRef.current = {
-      cirkewwa: cirkewwaTime,
-      mgarr: mgarrTime,
+      cirkewwa: times.cirkewwa,
+      mgarr: times.mgarr,
       timestamp: Date.now(),
     };
 
     setResult({
-      cirkewwa: cirkewwaTime,
-      mgarr: mgarrTime,
+      cirkewwa: times.cirkewwa,
+      mgarr: times.mgarr,
       loading: false,
       error: null,
     });
-  }, [userLat, userLon]);
+  }, [userLat, userLon, refreshTrigger, calculateDriveTimes]);
 
   return result;
 }

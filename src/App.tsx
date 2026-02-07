@@ -82,8 +82,12 @@ function App() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <div
             onClick={() => setSelectedTerminal('cirkewwa')}
-            className={`cursor-pointer transition-all ${
-              autoSelectedTerminal === 'cirkewwa' ? 'ring-2 ring-blue-500 ring-offset-2 rounded-xl' : ''
+            className={`cursor-pointer transition-all duration-300 rounded-xl ${
+              autoSelectedTerminal === 'cirkewwa'
+                ? 'ring-4 ring-blue-500 ring-offset-2 scale-[1.02] shadow-lg shadow-blue-500/20'
+                : autoSelectedTerminal === 'mgarr'
+                  ? 'opacity-60 hover:opacity-80'
+                  : ''
             }`}
           >
             <TerminalPanel
@@ -94,11 +98,20 @@ function App() {
               locationAvailable={hasLocation}
               ferryPrediction={cirkewwaFerryPrediction}
             />
+            {autoSelectedTerminal === 'cirkewwa' && (
+              <div className="bg-blue-500 text-white text-xs font-medium py-1 px-3 rounded-b-xl text-center -mt-1">
+                Your departure terminal
+              </div>
+            )}
           </div>
           <div
             onClick={() => setSelectedTerminal('mgarr')}
-            className={`cursor-pointer transition-all ${
-              autoSelectedTerminal === 'mgarr' ? 'ring-2 ring-blue-500 ring-offset-2 rounded-xl' : ''
+            className={`cursor-pointer transition-all duration-300 rounded-xl ${
+              autoSelectedTerminal === 'mgarr'
+                ? 'ring-4 ring-blue-500 ring-offset-2 scale-[1.02] shadow-lg shadow-blue-500/20'
+                : autoSelectedTerminal === 'cirkewwa'
+                  ? 'opacity-60 hover:opacity-80'
+                  : ''
             }`}
           >
             <TerminalPanel
@@ -109,6 +122,11 @@ function App() {
               locationAvailable={hasLocation}
               ferryPrediction={mgarrFerryPrediction}
             />
+            {autoSelectedTerminal === 'mgarr' && (
+              <div className="bg-blue-500 text-white text-xs font-medium py-1 px-3 rounded-b-xl text-center -mt-1">
+                Your departure terminal
+              </div>
+            )}
           </div>
         </div>
 
