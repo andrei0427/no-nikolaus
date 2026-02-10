@@ -36,13 +36,64 @@ const ferryLaneOffset: Record<number, number> = {
   248928000: -8,   // Gaudos - slightly left
 };
 
+// Simplified but geographically accurate island paths
+// Based on actual Malta archipelago outlines
+const GOZO_PATH = `
+  M 45,65
+  C 35,60 28,50 30,38
+  C 32,28 42,20 55,16
+  C 68,12 85,10 100,12
+  C 115,14 128,20 138,28
+  C 148,36 155,48 154,60
+  C 153,72 145,82 132,88
+  L 128,86
+  C 130,82 128,76 122,74
+  C 116,72 110,76 112,82
+  L 108,88
+  C 95,92 78,92 62,88
+  C 50,84 42,76 45,65
+  Z
+`;
+
+const COMINO_PATH = `
+  M 50,25
+  C 42,22 35,28 32,38
+  C 29,48 35,58 45,62
+  C 55,66 68,64 75,55
+  C 82,46 80,32 70,26
+  C 62,21 55,23 50,25
+  Z
+`;
+
+const MALTA_PATH = `
+  M 25,30
+  C 18,35 15,45 18,55
+  L 16,58
+  C 12,56 8,60 10,66
+  C 12,72 18,74 22,70
+  L 25,72
+  C 28,82 38,92 52,98
+  C 66,104 85,108 105,108
+  C 125,108 145,104 162,96
+  C 179,88 192,76 198,62
+  C 204,48 202,34 192,24
+  C 182,14 165,8 145,6
+  C 125,4 105,6 85,12
+  C 65,18 48,28 38,38
+  L 35,35
+  C 38,30 34,24 28,24
+  C 22,24 18,30 22,36
+  L 25,30
+  Z
+`;
+
 export function CartoonMap({ vessels, nikolaus, predictedNikolausPosition }: CartoonMapProps) {
   // Route endpoints (in percentage of container)
   // Mgarr (top-left) to Cirkewwa (bottom-right)
-  const mgarrX = 25;
-  const mgarrY = 12;
-  const cirkewwaX = 75;
-  const cirkewwaY = 88;
+  const mgarrX = 28;
+  const mgarrY = 18;
+  const cirkewwaX = 72;
+  const cirkewwaY = 82;
 
   // Calculate position along diagonal route
   const getPositionOnRoute = (progress: number, laneOffset: number = 0) => {
@@ -66,200 +117,147 @@ export function CartoonMap({ vessels, nikolaus, predictedNikolausPosition }: Car
 
       <div className="relative bg-gradient-to-br from-sky-300 via-sky-400 to-sky-500 rounded-xl overflow-hidden" style={{ minHeight: '400px' }}>
 
-        {/* Gozo Island - Top Left - Higher fidelity shape */}
+        {/* Single SVG for all islands */}
         <svg
-          className="absolute"
-          style={{ top: '-5%', left: '0%', width: '55%', height: '45%' }}
-          viewBox="0 0 300 200"
-          preserveAspectRatio="xMidYMid meet"
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid slice"
         >
           <defs>
-            <filter id="gozoShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="3" dy="3" stdDeviation="3" floodOpacity="0.3"/>
+            <filter id="islandShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="1" dy="1" stdDeviation="1" floodOpacity="0.3"/>
             </filter>
-          </defs>
-          {/* Gozo - More detailed coastline */}
-          <path
-            d="M80,140
-               C60,135 45,125 40,110
-               C35,95 40,80 50,70
-               C60,60 75,52 95,48
-               C115,44 140,42 165,45
-               C190,48 210,55 225,65
-               C240,75 250,88 252,102
-               C254,116 248,130 235,140
-               C222,150 205,156 185,158
-               C165,160 145,158 125,155
-               C105,152 90,148 80,140 Z
-
-               M100,95 C95,90 98,82 105,80 C112,78 120,82 118,90 C116,98 105,100 100,95 Z"
-            fill="#D4A574"
-            stroke="#8B7355"
-            strokeWidth="3"
-            filter="url(#gozoShadow)"
-          />
-          {/* Dwejra/Azure Window area indent */}
-          <path
-            d="M50,85 C45,82 42,78 45,74 C48,70 55,72 58,78 C61,84 55,88 50,85 Z"
-            fill="#D4A574"
-            stroke="#8B7355"
-            strokeWidth="2"
-          />
-          {/* Victoria/Rabat hill */}
-          <ellipse cx="150" cy="95" rx="25" ry="15" fill="#C4956A" opacity="0.5" />
-          {/* Gozo label */}
-          <text x="150" y="105" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#5D4037" fontFamily="Fredoka, sans-serif">
-            GOZO
-          </text>
-          {/* Mgarr Harbour - indentation on southeast */}
-          <path
-            d="M220,130 C225,125 235,128 238,135 C241,142 235,148 228,145 C221,142 215,135 220,130 Z"
-            fill="#7CB9E8"
-            stroke="#8B7355"
-            strokeWidth="2"
-          />
-          {/* Mgarr terminal marker */}
-          <circle cx="230" cy="138" r="8" fill="#C62828" stroke="white" strokeWidth="3" />
-          <text x="230" y="165" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#5D4037">
-            Mgarr
-          </text>
-        </svg>
-
-        {/* Comino - Small island in between */}
-        <svg
-          className="absolute"
-          style={{ top: '35%', left: '35%', width: '20%', height: '15%' }}
-          viewBox="0 0 100 60"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <ellipse
-            cx="50" cy="30" rx="35" ry="20"
-            fill="#D4A574"
-            stroke="#8B7355"
-            strokeWidth="2"
-            opacity="0.8"
-          />
-          <text x="50" y="35" textAnchor="middle" fontSize="10" fill="#5D4037" fontFamily="Fredoka, sans-serif">
-            Comino
-          </text>
-        </svg>
-
-        {/* Malta Island - Bottom Right - Higher fidelity shape (northern tip) */}
-        <svg
-          className="absolute"
-          style={{ bottom: '-8%', right: '-5%', width: '65%', height: '50%' }}
-          viewBox="0 0 350 220"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            <filter id="maltaShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="3" dy="3" stdDeviation="3" floodOpacity="0.3"/>
-            </filter>
-          </defs>
-          {/* Malta northern region - Detailed coastline */}
-          <path
-            d="M40,80
-               C30,90 25,105 30,120
-               C35,135 50,150 70,162
-               C90,174 115,182 145,188
-               C175,194 210,196 245,192
-               C280,188 305,178 320,162
-               C335,146 340,125 335,105
-               C330,85 315,70 295,60
-               C275,50 250,45 220,44
-               C190,43 160,46 130,52
-               C100,58 75,68 55,78
-               C45,83 40,80 40,80 Z
-
-               M280,140 C290,145 295,155 290,162 C285,169 275,168 272,160 C269,152 270,135 280,140 Z"
-            fill="#D4A574"
-            stroke="#8B7355"
-            strokeWidth="3"
-            filter="url(#maltaShadow)"
-          />
-          {/* Paradise Bay indent */}
-          <path
-            d="M75,95 C70,88 72,78 80,75 C88,72 95,78 92,88 C89,98 80,102 75,95 Z"
-            fill="#7CB9E8"
-            stroke="#8B7355"
-            strokeWidth="2"
-          />
-          {/* Mellieha Bay */}
-          <path
-            d="M120,170 C130,175 145,178 160,176 C175,174 165,165 150,163 C135,161 110,165 120,170 Z"
-            fill="#7CB9E8"
-            stroke="#8B7355"
-            strokeWidth="1.5"
-          />
-          {/* Hills */}
-          <ellipse cx="200" cy="120" rx="40" ry="20" fill="#C4956A" opacity="0.4" />
-          {/* Malta label */}
-          <text x="200" y="130" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#5D4037" fontFamily="Fredoka, sans-serif">
-            MALTA
-          </text>
-          {/* Cirkewwa terminal - northwest tip */}
-          <circle cx="55" cy="85" r="8" fill="#C62828" stroke="white" strokeWidth="3" />
-          <text x="55" y="65" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#5D4037">
-            Cirkewwa
-          </text>
-        </svg>
-
-        {/* Diagonal ferry route line */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          <defs>
+            <linearGradient id="landGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#E8D4B8" />
+              <stop offset="100%" stopColor="#D4A574" />
+            </linearGradient>
             <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.3" />
               <stop offset="50%" stopColor="#3B82F6" stopOpacity="0.5" />
               <stop offset="100%" stopColor="#60A5FA" stopOpacity="0.3" />
             </linearGradient>
           </defs>
-          {/* Route path */}
+
+          {/* Ferry route */}
           <line
-            x1={`${mgarrX}%`} y1={`${mgarrY}%`}
-            x2={`${cirkewwaX}%`} y2={`${cirkewwaY}%`}
+            x1={mgarrX} y1={mgarrY}
+            x2={cirkewwaX} y2={cirkewwaY}
             stroke="url(#routeGradient)"
-            strokeWidth="20"
+            strokeWidth="8"
             strokeLinecap="round"
-            opacity="0.4"
-          />
-          <line
-            x1={`${mgarrX}%`} y1={`${mgarrY}%`}
-            x2={`${cirkewwaX}%`} y2={`${cirkewwaY}%`}
-            stroke="white"
-            strokeWidth="2"
-            strokeDasharray="10,10"
             opacity="0.5"
           />
-        </svg>
+          <line
+            x1={mgarrX} y1={mgarrY}
+            x2={cirkewwaX} y2={cirkewwaY}
+            stroke="white"
+            strokeWidth="0.8"
+            strokeDasharray="3,3"
+            opacity="0.6"
+          />
 
-        {/* Animated waves along the channel */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[20, 35, 50, 65, 80].map((pos, i) => {
+          {/* Gozo - Top left */}
+          <g transform="translate(-5, -12) scale(0.55)">
+            <path
+              d={GOZO_PATH}
+              fill="url(#landGradient)"
+              stroke="#8B7355"
+              strokeWidth="1.5"
+              filter="url(#islandShadow)"
+            />
+            <text
+              x="90" y="55"
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="bold"
+              fill="#5D4037"
+              fontFamily="Fredoka, sans-serif"
+            >
+              GOZO
+            </text>
+          </g>
+
+          {/* Mgarr terminal marker */}
+          <circle cx={mgarrX} cy={mgarrY} r="3" fill="#C62828" stroke="white" strokeWidth="1.5" />
+          <text
+            x={mgarrX} y={mgarrY - 5}
+            textAnchor="middle"
+            fontSize="4"
+            fontWeight="bold"
+            fill="#5D4037"
+          >
+            Mgarr
+          </text>
+
+          {/* Comino - Center */}
+          <g transform="translate(38, 32) scale(0.18)">
+            <path
+              d={COMINO_PATH}
+              fill="url(#landGradient)"
+              stroke="#8B7355"
+              strokeWidth="2"
+              filter="url(#islandShadow)"
+            />
+            <text
+              x="50" y="48"
+              textAnchor="middle"
+              fontSize="22"
+              fill="#5D4037"
+              fontFamily="Fredoka, sans-serif"
+            >
+              Comino
+            </text>
+          </g>
+
+          {/* Malta - Bottom right */}
+          <g transform="translate(42, 48) scale(0.6)">
+            <path
+              d={MALTA_PATH}
+              fill="url(#landGradient)"
+              stroke="#8B7355"
+              strokeWidth="1.5"
+              filter="url(#islandShadow)"
+            />
+            <text
+              x="105" y="60"
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="bold"
+              fill="#5D4037"
+              fontFamily="Fredoka, sans-serif"
+            >
+              MALTA
+            </text>
+          </g>
+
+          {/* Cirkewwa terminal marker */}
+          <circle cx={cirkewwaX} cy={cirkewwaY} r="3" fill="#C62828" stroke="white" strokeWidth="1.5" />
+          <text
+            x={cirkewwaX} y={cirkewwaY + 7}
+            textAnchor="middle"
+            fontSize="4"
+            fontWeight="bold"
+            fill="#5D4037"
+          >
+            Cirkewwa
+          </text>
+
+          {/* Animated waves */}
+          {[25, 40, 55, 70].map((pos, i) => {
             const wavePos = getPositionOnRoute(pos, 0);
             return (
-              <svg
-                key={i}
-                className={`absolute ${i % 2 === 0 ? 'animate-wave' : 'animate-wave-reverse'}`}
-                style={{
-                  left: `${wavePos.x - 10}%`,
-                  top: `${wavePos.y - 2}%`,
-                  width: '20%',
-                  height: '4%',
-                  opacity: 0.3 + (i % 3) * 0.1,
-                }}
-                viewBox="0 0 100 20"
-                preserveAspectRatio="none"
-              >
+              <g key={i} className={i % 2 === 0 ? 'animate-wave' : 'animate-wave-reverse'}>
                 <path
-                  d="M0,10 Q15,5 30,10 T60,10 T100,10"
+                  d={`M ${wavePos.x - 6},${wavePos.y} q 3,-2 6,0 t 6,0`}
                   fill="none"
                   stroke="white"
-                  strokeWidth="3"
+                  strokeWidth="0.8"
+                  opacity={0.4 + (i % 2) * 0.2}
                 />
-              </svg>
+              </g>
             );
           })}
-        </div>
+        </svg>
 
         {/* Ferries */}
         {vessels.map((vessel) => {
