@@ -22,7 +22,7 @@ const statusConfig = {
     emoji: '🚫',
     text: 'AVOID!',
     className: 'status-avoid',
-    animation: 'animate-shake',
+    animation: '',
   },
 };
 
