@@ -142,7 +142,7 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
     return {
       terminal,
       status: 'SAFE',
-      reason: `Nikolaus is docked at ${terminal === 'cirkewwa' ? 'Mgarr' : 'Cirkewwa'}`,
+      reason: `Nikolaus is docked at ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
     };
@@ -153,7 +153,7 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
     return {
       terminal,
       status: 'SAFE',
-      reason: `Nikolaus is heading to ${terminal === 'cirkewwa' ? 'Mgarr' : 'Cirkewwa'}`,
+      reason: `Nikolaus is heading to ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
     };

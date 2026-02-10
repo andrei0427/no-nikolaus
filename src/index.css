@@ -40,11 +40,6 @@ h1, h2, h3, h4, h5, h6 {
   50% { transform: translateY(0); }
 }
 
-@keyframes bob {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-5px) rotate(2deg); }
-}
-
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 5px currentColor; }
   50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
@@ -62,10 +57,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-wave-reverse {
   animation: wave-reverse 3s ease-in-out infinite;
-}
-
-.animate-bob {
-  animation: bob 2s ease-in-out infinite;
 }
 
 .animate-pulse-glow {

@@ -21,7 +21,7 @@ export function FerryIcon({
         width={size}
         height={size * 0.7}
         viewBox="0 0 100 70"
-        className={`${className} ${!isGhost ? 'animate-bob' : ''}`}
+        className={className}
         style={{ opacity }}
       >
         {/* Evil ferry - Nikolaus */}
@@ -103,8 +103,8 @@ export function FerryIcon({
       width={size}
       height={size * 0.7}
       viewBox="0 0 100 70"
-      className={`${className} ${!isGhost ? 'animate-bob' : ''}`}
-      style={{ opacity, animationDelay: `${Math.random() * 2}s` }}
+      className={className}
+      style={{ opacity }}
     >
       {/* Friendly ferry */}
       {/* Hull */}
