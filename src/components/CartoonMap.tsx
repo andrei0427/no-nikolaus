@@ -228,36 +228,21 @@ export function CartoonMap({ vessels, nikolaus, predictedNikolausPosition }: Car
             Ċirkewwa
           </text>
 
-          {/* Static waves scattered across the sea */}
-          {[
-            // Around Gozo
-            { x: 8, y: 6 }, { x: 3, y: 15 }, { x: 12, y: 24 },
-            // Channel area
-            { x: 25, y: 30 }, { x: 35, y: 35 }, { x: 30, y: 42 },
-            // Around Comino
-            { x: 38, y: 26 }, { x: 42, y: 32 },
-            // Around Malta - top
-            { x: 50, y: 42 }, { x: 58, y: 38 }, { x: 68, y: 44 },
-            // Around Malta - right side
-            { x: 88, y: 52 }, { x: 92, y: 65 }, { x: 95, y: 78 }, { x: 85, y: 88 },
-            // Around Malta - bottom
-            { x: 70, y: 95 }, { x: 55, y: 92 }, { x: 42, y: 88 },
-            // Left side of map
-            { x: 5, y: 45 }, { x: 8, y: 60 }, { x: 12, y: 75 }, { x: 18, y: 88 },
-            // Top right
-            { x: 75, y: 8 }, { x: 88, y: 15 }, { x: 92, y: 28 },
-            // Extra scattered
-            { x: 22, y: 55 }, { x: 28, y: 68 }, { x: 15, y: 38 },
-          ].map((pos, i) => (
-            <path
-              key={i}
-              d={`M ${pos.x - 3},${pos.y} q 1.5,-1.2 3,0 t 3,0`}
-              fill="none"
-              stroke="white"
-              strokeWidth="0.5"
-              opacity={0.3 + (i % 3) * 0.1}
-            />
-          ))}
+          {/* Waves along the channel */}
+          {[20, 40, 60, 80].map((pos, i) => {
+            const wavePos = getPositionOnRoute(pos, 0);
+            return (
+              <g key={i} className={i % 2 === 0 ? 'animate-wave' : 'animate-wave-reverse'}>
+                <path
+                  d={`M ${wavePos.x - 4},${wavePos.y} q 2,-1.5 4,0 t 4,0`}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="0.6"
+                  opacity={0.4 + (i % 2) * 0.15}
+                />
+              </g>
+            );
+          })}
         </svg>
 
         {/* Ferries */}
