@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { TerminalPanel } from './components/TerminalPanel';
 import { LocationPermission } from './components/LocationPermission';
 import { MapView } from './components/MapView';
-import { useVesselTracking } from './hooks/useVesselTracking';
+import { useVesselStream } from './hooks/useVesselStream';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useDriveTime } from './hooks/useDriveTime';
 import { predictTerminalStatus } from './utils/prediction';
@@ -11,7 +11,7 @@ import { predictLikelyFerry } from './utils/ferryPrediction';
 import { Terminal } from './types';
 
 function App() {
-  const { vessels, nikolaus, connected, lastUpdate } = useVesselTracking();
+  const { vessels, nikolaus, connected, lastUpdate } = useVesselStream();
   const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(null);
   const {
     latitude,
