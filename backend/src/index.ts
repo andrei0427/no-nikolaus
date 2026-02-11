@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { initFirebase, getLatestVessels } from './firebase.js';
 import { initSchedule } from './schedule.js';
 import { handleSSE } from './sseHandler.js';
@@ -9,6 +10,11 @@ import { handleSendPush, handlePredictionFeedback } from './pushHandler.js';
 import { sendTelegramAlert } from './telegram.js';
 
 const app = express();
+
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // CSP handled by frontend meta tag
+}));
 
 // CORS configuration
 app.use(
