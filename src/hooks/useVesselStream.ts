@@ -31,12 +31,10 @@ export function useVesselStream(): UseVesselStreamResult {
         eventSourceRef.current.close();
       }
 
-      console.log('Connecting to SSE stream...');
       const eventSource = new EventSource(`${API_URL}/api/vessels/stream`);
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
-        console.log('SSE connection established');
         setConnected(true);
         setError(null);
       };

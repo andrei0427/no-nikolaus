@@ -1,8 +1,9 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+import { NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -13,9 +14,10 @@ cleanupOutdatedCaches();
 // Runtime cache for OpenRouteService API
 registerRoute(
   /^https:\/\/api\.openrouteservice\.org\/.*/i,
-  new CacheFirst({
+  new NetworkFirst({
     cacheName: 'route-cache',
     plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
       new ExpirationPlugin({
         maxEntries: 50,
         maxAgeSeconds: 60 * 60 * 24, // 24 hours
@@ -33,12 +35,9 @@ interface PushPayload {
 
 // Push notification handler
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push event received', event.data ? 'with data' : 'without data');
-
   if (!event.data) return;
 
   const data: PushPayload = event.data.json();
-  console.log('[SW] Push payload:', JSON.stringify(data));
 
   const options: NotificationOptions = {
     body: data.body,
@@ -53,14 +52,12 @@ self.addEventListener('push', (event) => {
     ],
   };
 
-  console.log('[SW] Showing notification:', data.title);
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
   const { terminal, ferryName } = event.notification.data;
-  console.log('[SW] Notification clicked, action:', event.action || 'body');
 
   event.notification.close();
 
