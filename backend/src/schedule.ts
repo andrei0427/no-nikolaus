@@ -78,7 +78,7 @@ async function fetchFromApi(dateStr: string): Promise<FerrySchedule | null> {
   console.log(`Fetching ferry schedule from ${url}`);
 
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!res.ok) {
       console.error(`Schedule fetch failed: ${res.status} ${res.statusText}`);
       sendTelegramAlert(`Schedule fetch error: ${res.status} ${res.statusText}`);

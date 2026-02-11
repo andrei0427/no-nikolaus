@@ -3,8 +3,16 @@ import { subscribe, getLatestVessels, subscribePortVehicles, getLatestPortVehicl
 import { getSchedule } from './schedule.js';
 import { SSEMessage } from './types.js';
 
+const MAX_SSE_CONNECTIONS = 100;
+let activeConnections = 0;
+
 export function handleSSE(req: Request, res: Response): void {
-  console.log('New SSE connection');
+  if (activeConnections >= MAX_SSE_CONNECTIONS) {
+    res.status(503).json({ error: 'Too many connections' });
+    return;
+  }
+  activeConnections++;
+  console.log(`New SSE connection (${activeConnections} active)`);
 
   // Set SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
@@ -53,7 +61,8 @@ export function handleSSE(req: Request, res: Response): void {
 
   // Clean up on connection close
   req.on('close', () => {
-    console.log('SSE connection closed');
+    activeConnections--;
+    console.log(`SSE connection closed (${activeConnections} active)`);
     clearInterval(keepalive);
     unsubscribeVessels();
     unsubscribePortVehicles();

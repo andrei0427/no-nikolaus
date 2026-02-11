@@ -11,11 +11,37 @@ if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);
 }
 
+const VALID_TERMINALS = ['cirkewwa', 'mgarr'];
+
+function isValidSubscription(sub: unknown): sub is { endpoint: string; keys: { p256dh: string; auth: string } } {
+  if (!sub || typeof sub !== 'object') return false;
+  const s = sub as Record<string, unknown>;
+  if (typeof s.endpoint !== 'string' || !s.endpoint.startsWith('https://')) return false;
+  if (!s.keys || typeof s.keys !== 'object') return false;
+  const k = s.keys as Record<string, unknown>;
+  return typeof k.p256dh === 'string' && typeof k.auth === 'string';
+}
+
 export async function handleSendPush(req: Request, res: Response) {
   const { subscription, terminal, ferryName } = req.body;
 
   if (!subscription || !terminal || !ferryName) {
     res.status(400).json({ error: 'Missing subscription, terminal, or ferryName' });
+    return;
+  }
+
+  if (!isValidSubscription(subscription)) {
+    res.status(400).json({ error: 'Invalid subscription format' });
+    return;
+  }
+
+  if (!VALID_TERMINALS.includes(terminal)) {
+    res.status(400).json({ error: 'Invalid terminal' });
+    return;
+  }
+
+  if (typeof ferryName !== 'string' || ferryName.length > 50) {
+    res.status(400).json({ error: 'Invalid ferryName' });
     return;
   }
 
@@ -59,6 +85,16 @@ export async function handlePredictionFeedback(req: Request, res: Response) {
   if (!isTelegramConfigured()) {
     console.warn('Telegram not configured, skipping feedback forwarding');
     res.json({ ok: true, telegram: false });
+    return;
+  }
+
+  if (!VALID_TERMINALS.includes(terminal)) {
+    res.status(400).json({ error: 'Invalid terminal' });
+    return;
+  }
+
+  if (typeof ferryName !== 'string' || ferryName.length > 50) {
+    res.status(400).json({ error: 'Invalid ferryName' });
     return;
   }
 

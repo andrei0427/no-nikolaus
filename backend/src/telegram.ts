@@ -30,12 +30,16 @@ export async function sendTelegramAlert(message: string): Promise<void> {
 }
 
 export function sendTelegramMessage(text: string): Promise<Response> {
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+
   return fetch(
     `https://api.telegram.org/bot${botToken}/sendMessage`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text }),
+      signal: AbortSignal.timeout(10000),
     }
   );
 }
