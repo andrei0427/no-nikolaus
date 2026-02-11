@@ -3,6 +3,7 @@ import { getDatabase, ref, onValue, DataSnapshot } from 'firebase/database';
 import { Vessel, VesselData, PortVehicleData, PortVehicleDetections } from './types.js';
 import { VESSEL_NAMES, NIKOLAUS_MMSI } from './constants.js';
 import { determineVesselState } from './vesselState.js';
+import { sendTelegramAlert } from './telegram.js';
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyB1Qc0mjt5omlG7AHznY_RAHVgyq-It-tI',
@@ -61,6 +62,7 @@ export function initFirebase(): void {
     },
     (error) => {
       console.error('Firebase error:', error.message);
+      sendTelegramAlert(`Firebase error: ${error.message}`);
     }
   );
 
@@ -96,6 +98,7 @@ export function initFirebase(): void {
     },
     (error) => {
       console.error('Firebase port vehicle error:', error.message);
+      sendTelegramAlert(`Firebase port vehicle error: ${error.message}`);
     }
   );
 

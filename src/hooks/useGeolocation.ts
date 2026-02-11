@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GeolocationState } from '../types';
+import { reportError } from '../utils/reportError';
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1500;
@@ -60,6 +61,7 @@ export function useGeolocation(): GeolocationState & { requestPermission: () => 
         (error) => {
           // Permission denied — no point retrying
           if (error.code === error.PERMISSION_DENIED) {
+            reportError('Geolocation', `Permission denied: ${error.message}`);
             setState({
               latitude: null,
               longitude: null,
@@ -79,6 +81,7 @@ export function useGeolocation(): GeolocationState & { requestPermission: () => 
             }, RETRY_DELAY_MS);
           } else {
             // All retries exhausted
+            reportError('Geolocation', `Retries exhausted: ${error.message}`);
             setState({
               latitude: null,
               longitude: null,

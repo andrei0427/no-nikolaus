@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { haversineDistance } from '../utils/coordinates';
 import { TERMINALS } from '../utils/constants';
+import { reportError } from '../utils/reportError';
 import type { Terminal } from '../types';
 
 const PROXIMITY_THRESHOLD_KM = 0.5; // 500 meters
@@ -63,7 +64,7 @@ export function useProximityNotification({
         }
       })
       .catch((err) => {
-        console.error('Failed to send proximity push:', err);
+        reportError('Proximity push', err);
         sessionStorage.removeItem(storageKey);
         sentRef.current = false;
       });

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Vessel, PortVehicleData, FerrySchedule } from '../types';
+import { reportError } from '../utils/reportError';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -52,12 +53,12 @@ export function useVesselStream(): UseVesselStreamResult {
           }
           setLastUpdate(new Date(data.timestamp));
         } catch (e) {
-          console.error('Failed to parse SSE message:', e);
+          reportError('SSE parse', e);
         }
       };
 
       eventSource.onerror = () => {
-        console.log('SSE connection error');
+        reportError('SSE', 'SSE connection error');
         setConnected(false);
         setError('Connection lost. Reconnecting...');
         eventSource.close();

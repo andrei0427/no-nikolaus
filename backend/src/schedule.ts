@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { FerrySchedule } from './types.js';
+import { sendTelegramAlert } from './telegram.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CACHE_DIR = join(__dirname, '..', 'cache');
@@ -80,12 +81,14 @@ async function fetchFromApi(dateStr: string): Promise<FerrySchedule | null> {
     const res = await fetch(url);
     if (!res.ok) {
       console.error(`Schedule fetch failed: ${res.status} ${res.statusText}`);
+      sendTelegramAlert(`Schedule fetch error: ${res.status} ${res.statusText}`);
       return null;
     }
     const data = (await res.json()) as ScheduleResponse;
     return parseSchedule(data);
   } catch (err) {
     console.error('Failed to fetch schedule:', err);
+    sendTelegramAlert(`Schedule fetch error: ${err}`);
     return null;
   }
 }
