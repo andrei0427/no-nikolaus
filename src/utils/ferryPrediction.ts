@@ -1,11 +1,12 @@
-import { Vessel, Terminal, VesselState } from '../types';
+import { Vessel, Terminal, VesselState, FerrySchedule } from '../types';
 import { distanceToTerminal, estimateArrivalTime } from './coordinates';
 import { TERMINALS, TURNAROUND_TIME, BUFFER_TIME, AVERAGE_CROSSING_TIME } from './constants';
 
-interface FerryPrediction {
+export interface FerryPrediction {
   ferry: Vessel | null;
   confidence: 'high' | 'medium' | 'low';
   reason: string;
+  departureTime: string | null;
 }
 
 interface NikolausPositionPrediction {
@@ -14,145 +15,116 @@ interface NikolausPositionPrediction {
   state: VesselState;
 }
 
+/** Parse "HH:MM" to minutes-of-day */
+function parseTime(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
 /**
- * Predict which ferry will likely serve the user upon arrival at a terminal
+ * Predict which ferry will likely serve the user upon arrival at a terminal.
+ * Uses the schedule to determine the next catchable departure.
  */
 export function predictLikelyFerry(
   vessels: Vessel[],
   terminal: Terminal,
-  driveTime: number | null
+  driveTime: number | null,
+  schedule: FerrySchedule | null
 ): FerryPrediction {
   if (vessels.length === 0) {
-    return { ferry: null, confidence: 'low', reason: 'No ferry data available' };
+    return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
   }
 
-  const userArrivalTime = driveTime !== null ? driveTime + BUFFER_TIME : null;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-  // Find ferries docked at the target terminal
-  const dockedAtTerminal = vessels.filter((v) => {
-    if (terminal === 'cirkewwa') return v.state === 'DOCKED_CIRKEWWA';
-    return v.state === 'DOCKED_MGARR';
-  });
+  // When user arrives at terminal (minutes of day)
+  const userArrivalMinutes = driveTime !== null
+    ? nowMinutes + driveTime + BUFFER_TIME
+    : null;
 
-  // Find ferries en route to the target terminal
-  const enRouteToTerminal = vessels.filter((v) => {
-    if (terminal === 'cirkewwa') return v.state === 'EN_ROUTE_TO_CIRKEWWA';
-    return v.state === 'EN_ROUTE_TO_MGARR';
-  });
+  // Scheduled departure times for this terminal (minutes of day)
+  const depTimes = schedule
+    ? (terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr)?.map(t => ({ time: t, minutes: parseTime(t) })) ?? []
+    : [];
 
-  // If we don't have user arrival time, just report which ferries are there/coming
-  if (userArrivalTime === null) {
-    if (dockedAtTerminal.length > 0) {
-      // Return the one that's been there longest (likely to depart first)
-      // Without timestamp data, just return the first one
-      return {
-        ferry: dockedAtTerminal[0],
-        confidence: 'medium',
-        reason: `${dockedAtTerminal[0].name} is currently docked`,
-      };
-    }
-    if (enRouteToTerminal.length > 0) {
-      return {
-        ferry: enRouteToTerminal[0],
-        confidence: 'medium',
-        reason: `${enRouteToTerminal[0].name} is en route`,
-      };
-    }
-    return { ferry: null, confidence: 'low', reason: 'No ferries heading to this terminal' };
-  }
+  // For each vessel, estimate when it will be ready to depart from the target terminal
+  const candidates: { vessel: Vessel; readyMinutes: number; detail: string }[] = [];
 
-  // With user arrival time, we can make better predictions
-  // Check ferries en route - will they still be there when user arrives?
-  for (const ferry of enRouteToTerminal) {
-    const distance = distanceToTerminal(ferry.LAT, ferry.LON, TERMINALS[terminal]);
-    const ferryEta = estimateArrivalTime(distance, ferry.SPEED);
+  for (const vessel of vessels) {
+    const { state } = vessel;
+    const isDocked =
+      (terminal === 'cirkewwa' && state === 'DOCKED_CIRKEWWA') ||
+      (terminal === 'mgarr' && state === 'DOCKED_MGARR');
+    const isEnRoute =
+      (terminal === 'cirkewwa' && state === 'EN_ROUTE_TO_CIRKEWWA') ||
+      (terminal === 'mgarr' && state === 'EN_ROUTE_TO_MGARR');
+    const isDockedOther =
+      (terminal === 'cirkewwa' && state === 'DOCKED_MGARR') ||
+      (terminal === 'mgarr' && state === 'DOCKED_CIRKEWWA');
+    const isEnRouteAway =
+      (terminal === 'cirkewwa' && state === 'EN_ROUTE_TO_MGARR') ||
+      (terminal === 'mgarr' && state === 'EN_ROUTE_TO_CIRKEWWA');
 
-    if (ferryEta !== Infinity) {
-      const ferryDepartTime = ferryEta + TURNAROUND_TIME;
-
-      // If user arrives before ferry departs
-      if (userArrivalTime < ferryDepartTime) {
-        return {
-          ferry,
-          confidence: 'high',
-          reason: `${ferry.name} arrives in ~${Math.round(ferryEta)} min`,
-        };
+    if (isDocked) {
+      // Already at terminal — can serve the very next departure
+      candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
+    } else if (isEnRoute) {
+      const dist = distanceToTerminal(vessel.LAT, vessel.LON, TERMINALS[terminal]);
+      const eta = estimateArrivalTime(dist, vessel.SPEED);
+      if (eta !== Infinity) {
+        // Ready after arriving + turnaround
+        candidates.push({ vessel, readyMinutes: nowMinutes + eta + TURNAROUND_TIME, detail: `arrives in ~${Math.round(eta)} min` });
+      }
+    } else if (isDockedOther) {
+      // Needs to depart other terminal, cross, then turnaround here
+      const readyMinutes = nowMinutes + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
+      const from = terminal === 'cirkewwa' ? 'Gozo' : 'Malta';
+      candidates.push({ vessel, readyMinutes, detail: `crossing from ${from}` });
+    } else if (isEnRouteAway) {
+      const otherTerminal = terminal === 'cirkewwa' ? 'mgarr' : 'cirkewwa';
+      const dist = distanceToTerminal(vessel.LAT, vessel.LON, TERMINALS[otherTerminal]);
+      const eta = estimateArrivalTime(dist, vessel.SPEED);
+      if (eta !== Infinity) {
+        const readyMinutes = nowMinutes + eta + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
+        candidates.push({ vessel, readyMinutes, detail: `returning via ${otherTerminal === 'mgarr' ? 'Gozo' : 'Malta'}` });
       }
     }
   }
 
-  // Check ferries currently docked - will they still be there?
-  for (const ferry of dockedAtTerminal) {
-    // Assume docked ferries depart within TURNAROUND_TIME
-    if (userArrivalTime < TURNAROUND_TIME) {
-      return {
-        ferry,
-        confidence: 'high',
-        reason: `${ferry.name} is docked and departing soon`,
-      };
-    }
+  candidates.sort((a, b) => a.readyMinutes - b.readyMinutes);
+
+  if (candidates.length === 0) {
+    return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
   }
 
-  // Check ferries at other terminal or en route away - they might come back
-  const atOtherTerminal = vessels.filter((v) => {
-    if (terminal === 'cirkewwa') return v.state === 'DOCKED_MGARR';
-    return v.state === 'DOCKED_CIRKEWWA';
-  });
+  // --- Schedule-based prediction ---
+  if (depTimes.length > 0) {
+    const threshold = userArrivalMinutes ?? nowMinutes;
 
-  const enRouteAway = vessels.filter((v) => {
-    if (terminal === 'cirkewwa') return v.state === 'EN_ROUTE_TO_MGARR';
-    return v.state === 'EN_ROUTE_TO_CIRKEWWA';
-  });
-
-  // Estimate when these ferries might arrive at the target terminal
-  for (const ferry of enRouteAway) {
-    // Ferry is going away, will turn around and come back
-    const distanceToOther = distanceToTerminal(
-      ferry.LAT,
-      ferry.LON,
-      TERMINALS[terminal === 'cirkewwa' ? 'mgarr' : 'cirkewwa']
-    );
-    const timeToOther = estimateArrivalTime(distanceToOther, ferry.SPEED);
-
-    if (timeToOther !== Infinity) {
-      const roundTripTime = timeToOther + TURNAROUND_TIME + AVERAGE_CROSSING_TIME;
-
-      if (userArrivalTime > roundTripTime && userArrivalTime < roundTripTime + TURNAROUND_TIME) {
-        return {
-          ferry,
-          confidence: 'medium',
-          reason: `${ferry.name} may return by then`,
-        };
+    // For each candidate (sorted by readiness), find the first scheduled departure
+    // that is >= both the candidate's readiness and the user's arrival
+    for (const c of candidates) {
+      const minDep = Math.max(c.readyMinutes, threshold);
+      const dep = depTimes.find(d => d.minutes >= minDep);
+      if (dep) {
+        const confidence = c.detail === 'docked' ? 'high' : 'medium';
+        const reason = c.detail === 'docked'
+          ? `${c.vessel.name} departs at ${dep.time}`
+          : `${c.vessel.name} ${c.detail}, departs at ${dep.time}`;
+        return { ferry: c.vessel, confidence, reason, departureTime: dep.time };
       }
     }
+
+    return { ferry: null, confidence: 'low', reason: 'No more departures today', departureTime: null };
   }
 
-  for (const ferry of atOtherTerminal) {
-    // Ferry at other terminal, will cross to this terminal
-    const timeToArrive = AVERAGE_CROSSING_TIME; // Approximate
-
-    if (
-      userArrivalTime > timeToArrive &&
-      userArrivalTime < timeToArrive + TURNAROUND_TIME + 10
-    ) {
-      return {
-        ferry,
-        confidence: 'medium',
-        reason: `${ferry.name} may arrive from ${terminal === 'cirkewwa' ? 'Gozo' : 'Malta'}`,
-      };
-    }
+  // --- Fallback without schedule ---
+  const best = candidates[0];
+  if (best.detail === 'docked') {
+    return { ferry: best.vessel, confidence: 'medium', reason: `${best.vessel.name} is currently docked`, departureTime: null };
   }
-
-  // Return any available ferry with low confidence
-  if (vessels.length > 0) {
-    return {
-      ferry: vessels[0],
-      confidence: 'low',
-      reason: 'Timing uncertain',
-    };
-  }
-
-  return { ferry: null, confidence: 'low', reason: 'Unable to predict' };
+  return { ferry: best.vessel, confidence: 'low', reason: `${best.vessel.name} ${best.detail}`, departureTime: null };
 }
 
 /**
@@ -243,5 +215,43 @@ export function predictNikolausPosition(
     }
   }
 
+  return null;
+}
+
+/**
+ * Find the next scheduled departure from a terminal at or after a given time.
+ * If `afterTime` is provided (e.g. from a prediction), returns the departure AFTER that one.
+ * Returns the departure time string (e.g. "14:30") or null.
+ */
+export function getNextDeparture(
+  terminal: Terminal,
+  schedule: FerrySchedule | null,
+  driveTimeMinutes: number | null,
+  afterTime?: string | null
+): string | null {
+  if (!schedule) return null;
+
+  const times = terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr;
+  if (!times || times.length === 0) return null;
+
+  // Calculate the time the user arrives at the terminal
+  const now = new Date();
+  const arrivalMs = now.getTime() + (driveTimeMinutes ?? 0) * 60_000 + BUFFER_TIME * 60_000;
+  const arrival = new Date(arrivalMs);
+  const arrivalMinutes = arrival.getHours() * 60 + arrival.getMinutes();
+
+  // If we have a predicted departure, find the one strictly after it
+  const skipMinutes = afterTime ? parseTime(afterTime) : null;
+
+  for (const time of times) {
+    const depMinutes = parseTime(time);
+    if (depMinutes >= arrivalMinutes) {
+      // If skipping past a predicted departure, find the next one after it
+      if (skipMinutes !== null && depMinutes <= skipMinutes) continue;
+      return time;
+    }
+  }
+
+  // No more departures today
   return null;
 }

@@ -34,3 +34,17 @@ export const BUFFER_TIME = 15;
 
 // Turnaround time at terminal in minutes
 export const TURNAROUND_TIME = 15;
+
+// Ferry vehicle capacities (car-equivalent units)
+export const FERRY_CAPACITIES: Record<string, number> = {
+  "MV Ta' Pinu": 138,
+  'MV Malita': 138,
+  'MV Nikolaos': 160,
+  'MV Gaudos': 72,
+};
+
+// Truck-to-car equivalence (1 truck = 3 car spaces)
+export const TRUCK_CAR_EQUIVALENT = 3;
+
+// Motorbike-to-car equivalence (4 motorbikes = 1 car space)
+export const MOTORBIKE_CAR_EQUIVALENT = 0.25;

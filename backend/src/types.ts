@@ -29,7 +29,26 @@ export interface TerminalCoordinates {
   lon: number;
 }
 
+export interface PortVehicleDetections {
+  car: number;
+  motorbike: number;
+  truck: number;
+}
+
+export interface PortVehicleData {
+  cirkewwa: PortVehicleDetections | null;
+  mgarr: PortVehicleDetections | null;
+}
+
+export interface FerrySchedule {
+  date: string;
+  cirkewwa: string[]; // departure times like ["06:45", "07:15", ...]
+  mgarr: string[];
+}
+
 export interface SSEMessage {
   vessels: Vessel[];
+  portVehicleData?: PortVehicleData;
+  schedule?: FerrySchedule;
   timestamp: number;
 }

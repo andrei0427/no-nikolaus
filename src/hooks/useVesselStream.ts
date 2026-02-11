@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Vessel } from '../types';
+import { Vessel, PortVehicleData, FerrySchedule } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 interface UseVesselStreamResult {
   vessels: Vessel[];
   nikolaus: Vessel | null;
+  portVehicleData: PortVehicleData;
+  schedule: FerrySchedule | null;
   connected: boolean;
   lastUpdate: Date | null;
   error: string | null;
@@ -13,6 +15,8 @@ interface UseVesselStreamResult {
 
 export function useVesselStream(): UseVesselStreamResult {
   const [vessels, setVessels] = useState<Vessel[]>([]);
+  const [portVehicleData, setPortVehicleData] = useState<PortVehicleData>({ cirkewwa: null, mgarr: null });
+  const [schedule, setSchedule] = useState<FerrySchedule | null>(null);
   const [connected, setConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,12 @@ export function useVesselStream(): UseVesselStreamResult {
         try {
           const data = JSON.parse(event.data);
           setVessels(data.vessels);
+          if (data.portVehicleData) {
+            setPortVehicleData(data.portVehicleData);
+          }
+          if (data.schedule) {
+            setSchedule(data.schedule);
+          }
           setLastUpdate(new Date(data.timestamp));
         } catch (e) {
           console.error('Failed to parse SSE message:', e);
@@ -76,6 +86,8 @@ export function useVesselStream(): UseVesselStreamResult {
   return {
     vessels,
     nikolaus,
+    portVehicleData,
+    schedule,
     connected,
     lastUpdate,
     error,

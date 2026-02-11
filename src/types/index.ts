@@ -54,3 +54,20 @@ export interface DriveTimeResult {
   loading: boolean;
   error: string | null;
 }
+
+export interface PortVehicleDetections {
+  car: number;
+  motorbike: number;
+  truck: number;
+}
+
+export interface PortVehicleData {
+  cirkewwa: PortVehicleDetections | null;
+  mgarr: PortVehicleDetections | null;
+}
+
+export interface FerrySchedule {
+  date: string;
+  cirkewwa: string[]; // departure times like ["06:45", "07:15", ...]
+  mgarr: string[];
+}

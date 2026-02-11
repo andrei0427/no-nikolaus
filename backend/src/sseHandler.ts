@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { subscribe, getLatestVessels } from './firebase.js';
+import { subscribe, getLatestVessels, subscribePortVehicles, getLatestPortVehicleData } from './firebase.js';
+import { getSchedule } from './schedule.js';
 import { SSEMessage } from './types.js';
 
 export function handleSSE(req: Request, res: Response): void {
@@ -16,15 +17,30 @@ export function handleSSE(req: Request, res: Response): void {
   if (initialVessels.length > 0) {
     const message: SSEMessage = {
       vessels: initialVessels,
+      portVehicleData: getLatestPortVehicleData(),
+      schedule: getSchedule() ?? undefined,
       timestamp: Date.now(),
     };
     res.write(`data: ${JSON.stringify(message)}\n\n`);
   }
 
   // Subscribe to vessel updates
-  const unsubscribe = subscribe((vessels) => {
+  const unsubscribeVessels = subscribe((vessels) => {
     const message: SSEMessage = {
       vessels,
+      portVehicleData: getLatestPortVehicleData(),
+      schedule: getSchedule() ?? undefined,
+      timestamp: Date.now(),
+    };
+    res.write(`data: ${JSON.stringify(message)}\n\n`);
+  });
+
+  // Subscribe to port vehicle updates
+  const unsubscribePortVehicles = subscribePortVehicles((portVehicleData) => {
+    const message: SSEMessage = {
+      vessels: getLatestVessels(),
+      portVehicleData,
+      schedule: getSchedule() ?? undefined,
       timestamp: Date.now(),
     };
     res.write(`data: ${JSON.stringify(message)}\n\n`);
@@ -39,6 +55,7 @@ export function handleSSE(req: Request, res: Response): void {
   req.on('close', () => {
     console.log('SSE connection closed');
     clearInterval(keepalive);
-    unsubscribe();
+    unsubscribeVessels();
+    unsubscribePortVehicles();
   });
 }

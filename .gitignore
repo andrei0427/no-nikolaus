@@ -23,5 +23,8 @@ npm-debug.log*
 # PWA dev artifacts
 dev-dist
 
+# Schedule cache
+backend/cache
+
 # Claude
 .claude

@@ -1,21 +1,25 @@
-import { useMemo, useState } from 'react';
-import { Header } from './components/Header';
-import { TerminalPanel } from './components/TerminalPanel';
-import { LocationPermission } from './components/LocationPermission';
-import { MapView } from './components/MapView';
+import { useCallback, useMemo, useState } from 'react';
+import { CartoonHeader } from './components/CartoonHeader';
+import { CartoonTerminalCard } from './components/CartoonTerminalCard';
+import { CartoonLocationPermission } from './components/CartoonLocationPermission';
+import { CartoonMap } from './components/CartoonMap';
+import { WaveBorder } from './components/WaveBorder';
+import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { useVesselStream } from './hooks/useVesselStream';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useDriveTime } from './hooks/useDriveTime';
 import { predictTerminalStatus } from './utils/prediction';
-import { predictLikelyFerry } from './utils/ferryPrediction';
-import { Terminal } from './types';
+import { predictLikelyFerry, getNextDeparture } from './utils/ferryPrediction';
+import { usePushNotifications } from './hooks/usePushNotifications';
+import { useProximityNotification } from './hooks/useProximityNotification';
+
 
 function App() {
-  const { vessels, nikolaus, connected, lastUpdate } = useVesselStream();
-  const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(null);
+  const { vessels, nikolaus, portVehicleData, schedule, connected, lastUpdate } = useVesselStream();
   const {
     latitude,
     longitude,
+    error: geoError,
     loading: geoLoading,
     permissionDenied,
     requestPermission,
@@ -24,6 +28,10 @@ function App() {
   const driveTime = useDriveTime(latitude, longitude);
 
   const hasLocation = latitude !== null && longitude !== null;
+
+  const [showBothTerminals, setShowBothTerminals] = useState(false);
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [showThankYou, setShowThankYou] = useState<'yes' | 'no' | null>(null);
 
   const cirkewwaStatus = useMemo(
     () =>
@@ -46,109 +54,226 @@ function App() {
   );
 
   const cirkewwaFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa),
-    [vessels, driveTime.cirkewwa]
+    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa, schedule),
+    [vessels, driveTime.cirkewwa, schedule]
   );
 
   const mgarrFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr),
-    [vessels, driveTime.mgarr]
+    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr, schedule),
+    [vessels, driveTime.mgarr, schedule]
   );
 
-  const userLocation = hasLocation ? { lat: latitude!, lon: longitude! } : null;
+  const cirkewwaNextDeparture = useMemo(
+    () => getNextDeparture('cirkewwa', schedule, driveTime.cirkewwa, cirkewwaFerryPrediction.departureTime),
+    [schedule, driveTime.cirkewwa, cirkewwaFerryPrediction.departureTime]
+  );
+
+  const mgarrNextDeparture = useMemo(
+    () => getNextDeparture('mgarr', schedule, driveTime.mgarr, mgarrFerryPrediction.departureTime),
+    [schedule, driveTime.mgarr, mgarrFerryPrediction.departureTime]
+  );
 
   // Auto-select terminal based on which one user is closer to (if they have location)
   const autoSelectedTerminal = useMemo(() => {
-    if (selectedTerminal) return selectedTerminal;
     if (!hasLocation) return null;
     if (driveTime.cirkewwa !== null && driveTime.mgarr !== null) {
       return driveTime.cirkewwa < driveTime.mgarr ? 'cirkewwa' : 'mgarr';
     }
     return null;
-  }, [selectedTerminal, hasLocation, driveTime.cirkewwa, driveTime.mgarr]);
+  }, [hasLocation, driveTime.cirkewwa, driveTime.mgarr]);
+
+
+  // Push notifications
+  const { subscription, requestPermission: requestPushPermission } = usePushNotifications();
+
+  // Combined permission request: location + notifications
+  const requestAllPermissions = useCallback(() => {
+    requestPermission();
+    requestPushPermission();
+  }, [requestPermission, requestPushPermission]);
+
+  const predictedFerryName = useMemo(() => {
+    if (!autoSelectedTerminal) return null;
+    const prediction = autoSelectedTerminal === 'cirkewwa' ? cirkewwaFerryPrediction : mgarrFerryPrediction;
+    return prediction.ferry?.name ?? null;
+  }, [autoSelectedTerminal, cirkewwaFerryPrediction, mgarrFerryPrediction]);
+
+  useProximityNotification({
+    latitude,
+    longitude,
+    autoSelectedTerminal,
+    ferryName: predictedFerryName,
+    subscription,
+  });
+
+  const showSingleTerminal = autoSelectedTerminal && !showBothTerminals;
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <Header connected={connected} lastUpdate={lastUpdate} />
+    <div className="min-h-screen flex flex-col">
+      {/* Top wave border */}
+      <WaveBorder position="top" />
 
-      <LocationPermission
-        onRequestPermission={requestPermission}
+      <CartoonHeader connected={connected} lastUpdate={lastUpdate} />
+
+      <CartoonLocationPermission
+        onRequestPermission={requestAllPermissions}
         loading={geoLoading}
         permissionDenied={permissionDenied}
         hasLocation={hasLocation}
+        error={geoError}
       />
 
-      <main className="max-w-4xl mx-auto p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <div
-            onClick={() => setSelectedTerminal('cirkewwa')}
-            className={`cursor-pointer transition-all duration-300 rounded-xl ${
-              autoSelectedTerminal === 'cirkewwa'
-                ? 'ring-4 ring-blue-500 ring-offset-2 scale-[1.02] shadow-lg shadow-blue-500/20'
-                : autoSelectedTerminal === 'mgarr'
-                  ? 'opacity-60 hover:opacity-80'
-                  : ''
-            }`}
-          >
-            <TerminalPanel
+      <PwaInstallBanner />
+
+      {/* TEMPORARY: Test prediction feedback modal */}
+      {showTestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="cartoon-card p-6 max-w-sm w-full text-center">
+            <p className="text-lg font-bold text-amber-800 mb-2">Ferry Prediction Check</p>
+            <p className="text-amber-800 mb-4">
+              We predicted you'd get <strong>{predictedFerryName || 'MV Malita'}</strong> at{' '}
+              <strong>{autoSelectedTerminal === 'mgarr' ? 'Mġarr' : 'Ċirkewwa'}</strong> — did we get it right?
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setShowTestModal(false);
+                  setShowThankYou('yes');
+                  fetch('/api/prediction-feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      terminal: autoSelectedTerminal || 'cirkewwa',
+                      ferryName: predictedFerryName || 'MV Malita',
+                      correct: true,
+                    }),
+                  });
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl border-2 border-green-700"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => {
+                  setShowTestModal(false);
+                  setShowThankYou('no');
+                  fetch('/api/prediction-feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      terminal: autoSelectedTerminal || 'cirkewwa',
+                      ferryName: predictedFerryName || 'MV Malita',
+                      correct: false,
+                    }),
+                  });
+                }}
+                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl border-2 border-red-700"
+              >
+                No
+              </button>
+            </div>
+            <button
+              onClick={() => setShowTestModal(false)}
+              className="mt-3 text-amber-600 text-sm underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Thank you modal */}
+      {showThankYou !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="cartoon-card p-6 max-w-sm w-full text-center">
+            <p className="text-3xl mb-2">{showThankYou === 'yes' ? '🎉' : '🚢'}</p>
+            <p className="text-lg font-bold text-amber-800 mb-2">
+              {showThankYou === 'yes' ? 'Nailed it!' : 'Thanks for the feedback!'}
+            </p>
+            <p className="text-amber-700 mb-4">
+              {showThankYou === 'yes'
+                ? 'Glad we got it right! Have a great trip!'
+                : "Sorry we missed it. Your feedback helps us get better!"}
+            </p>
+            <button
+              onClick={() => setShowThankYou(null)}
+              className="bg-gradient-to-b from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold py-2 px-6 rounded-xl border-2 border-amber-700"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+
+      <main className="flex-1 max-w-4xl mx-auto px-4 py-6 w-full">
+        {/* Terminal cards */}
+        <div className={`grid gap-6 mb-6 ${showSingleTerminal ? 'grid-cols-1 max-w-md mx-auto' : 'grid-cols-1 sm:grid-cols-2'}`}>
+          {(!showSingleTerminal || autoSelectedTerminal === 'cirkewwa') && (
+            <CartoonTerminalCard
               terminal="cirkewwa"
               status={cirkewwaStatus}
               driveTime={driveTime.cirkewwa}
               driveTimeLoading={driveTime.loading}
               locationAvailable={hasLocation}
               ferryPrediction={cirkewwaFerryPrediction}
+              queueData={portVehicleData.cirkewwa ?? undefined}
+              nextDeparture={cirkewwaNextDeparture}
+              isSelected={autoSelectedTerminal === 'cirkewwa'}
             />
-            {autoSelectedTerminal === 'cirkewwa' && (
-              <div className="bg-blue-500 text-white text-xs font-medium py-1 px-3 rounded-b-xl text-center -mt-1">
-                Your departure terminal
-              </div>
-            )}
-          </div>
-          <div
-            onClick={() => setSelectedTerminal('mgarr')}
-            className={`cursor-pointer transition-all duration-300 rounded-xl ${
-              autoSelectedTerminal === 'mgarr'
-                ? 'ring-4 ring-blue-500 ring-offset-2 scale-[1.02] shadow-lg shadow-blue-500/20'
-                : autoSelectedTerminal === 'cirkewwa'
-                  ? 'opacity-60 hover:opacity-80'
-                  : ''
-            }`}
-          >
-            <TerminalPanel
+          )}
+          {(!showSingleTerminal || autoSelectedTerminal === 'mgarr') && (
+            <CartoonTerminalCard
               terminal="mgarr"
               status={mgarrStatus}
               driveTime={driveTime.mgarr}
               driveTimeLoading={driveTime.loading}
               locationAvailable={hasLocation}
               ferryPrediction={mgarrFerryPrediction}
+              queueData={portVehicleData.mgarr ?? undefined}
+              nextDeparture={mgarrNextDeparture}
+              isSelected={autoSelectedTerminal === 'mgarr'}
             />
-            {autoSelectedTerminal === 'mgarr' && (
-              <div className="bg-blue-500 text-white text-xs font-medium py-1 px-3 rounded-b-xl text-center -mt-1">
-                Your departure terminal
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {vessels.length > 0 && (
-          <div className="mt-6">
-            <MapView
-              vessels={vessels}
-              nikolaus={nikolaus}
-              userLocation={userLocation}
-              driveTime={driveTime}
-              selectedTerminal={autoSelectedTerminal ?? undefined}
-            />
+        {/* Toggle to show/hide both terminals */}
+        {autoSelectedTerminal && (
+          <div className="text-center mb-6">
+            <button
+              onClick={() => setShowBothTerminals((prev) => !prev)}
+              className="bg-white bg-opacity-70 hover:bg-opacity-90 text-amber-800 font-medium text-base px-5 py-2.5 rounded-full border-2 border-amber-300 shadow-md transition-all duration-200"
+            >
+              {showBothTerminals ? 'Show only my terminal' : 'View both terminals'}
+            </button>
           </div>
         )}
 
-        <footer className="mt-8 text-center text-slate-400 text-xs pb-4">
+        {/* Cartoon map */}
+        {vessels.length > 0 && (
+          <CartoonMap vessels={vessels} />
+        )}
+
+        {/* User location indicator */}
+        {hasLocation && (
+          <div className="mt-4 text-center">
+            <span className="inline-block bg-white bg-opacity-80 px-4 py-2 rounded-full text-amber-800 font-medium text-lg shadow-md">
+              Your location:{' '}
+              {autoSelectedTerminal === 'mgarr' ? 'Gozo' : 'Malta'}
+            </span>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-8 text-center text-white text-opacity-80 text-base pb-4">
           <p>Data from Gozo Channel vessel tracking</p>
-          <p className="mt-1">
+          <p className="mt-1 text-sm">
             Predictions are estimates and may not reflect actual ferry assignments
           </p>
         </footer>
       </main>
+
+      {/* Bottom wave border */}
+      <WaveBorder position="bottom" />
     </div>
   );
 }

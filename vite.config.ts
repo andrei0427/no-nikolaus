@@ -23,7 +23,7 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         background_color: '#f8fafc',
-        theme_color: '#3b82f6',
+        theme_color: '#4FC3F7',
         icons: [
           {
             src: '/icons/icon-192.png',
@@ -43,21 +43,11 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/api\.openrouteservice\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'route-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
-          }
-        ]
       }
     })
   ],
