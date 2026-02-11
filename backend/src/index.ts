@@ -12,12 +12,12 @@ const app = express();
 // CORS configuration
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
     methods: ['GET', 'POST'],
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // SSE endpoint for vessel streaming
 app.get('/api/vessels/stream', handleSSE);

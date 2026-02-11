@@ -5,14 +5,20 @@ import { VESSEL_NAMES, NIKOLAUS_MMSI } from './constants.js';
 import { determineVesselState } from './vesselState.js';
 import { sendTelegramAlert } from './telegram.js';
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
+}
+
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY || 'AIzaSyB1Qc0mjt5omlG7AHznY_RAHVgyq-It-tI',
-  authDomain: 'gozo-channel-manager.firebaseapp.com',
-  databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://gozo-channel-manager.firebaseio.com',
-  projectId: process.env.FIREBASE_PROJECT_ID || 'gozo-channel-manager',
-  storageBucket: 'gozo-channel-manager.appspot.com',
-  messagingSenderId: '465225105425',
-  appId: '1:465225105425:web:dc62dcf195f85885',
+  apiKey: requireEnv('FIREBASE_API_KEY'),
+  authDomain: requireEnv('FIREBASE_AUTH_DOMAIN'),
+  databaseURL: requireEnv('FIREBASE_DATABASE_URL'),
+  projectId: requireEnv('FIREBASE_PROJECT_ID'),
+  storageBucket: requireEnv('FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: requireEnv('FIREBASE_MESSAGING_SENDER_ID'),
+  appId: requireEnv('FIREBASE_APP_ID'),
 };
 
 let latestVessels: Vessel[] = [];
