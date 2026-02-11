@@ -32,7 +32,7 @@ export async function handleSendPush(req: Request, res: Response) {
   });
 
   try {
-    console.log(`[Push] Sending to ${terminal} for ${ferryName}, endpoint: ${subscription.endpoint}`);
+    console.log(`[Push] Sending to ${terminal} for ${ferryName}`);
     const result = await webpush.sendNotification(subscription, payload);
     console.log(`[Push] Sent successfully, status: ${result.statusCode}`);
     res.json({ ok: true });
@@ -78,7 +78,6 @@ export async function handlePredictionFeedback(req: Request, res: Response) {
     const resp = await sendTelegramMessage(message);
 
     if (!resp.ok) {
-      console.error('Telegram API error:', await resp.text());
       sendTelegramAlert(`Feedback Telegram error: ${resp.status}`);
     }
 

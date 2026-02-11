@@ -229,6 +229,7 @@ export function CartoonTerminalCard({
                 className="absolute inset-0 w-full h-full rounded-lg"
                 allow="autoplay"
                 allowFullScreen
+                sandbox="allow-scripts allow-same-origin"
               />
             </div>
           </div>
