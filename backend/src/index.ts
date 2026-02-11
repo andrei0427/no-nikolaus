@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { initFirebase, getLatestVessels } from './firebase.js';
 import { initSchedule } from './schedule.js';
 import { handleSSE } from './sseHandler.js';
@@ -19,6 +20,23 @@ app.use(
 
 app.use(express.json({ limit: '10kb' }));
 
+// Rate limiters
+const pushLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again later' },
+});
+
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again later' },
+});
+
 // SSE endpoint for vessel streaming
 app.get('/api/vessels/stream', handleSSE);
 
@@ -31,8 +49,8 @@ app.get('/api/vessels', (_req, res) => {
 });
 
 // Push notification endpoints
-app.post('/api/send-prediction-push', handleSendPush);
-app.post('/api/prediction-feedback', handlePredictionFeedback);
+app.post('/api/send-prediction-push', pushLimiter, handleSendPush);
+app.post('/api/prediction-feedback', feedbackLimiter, handlePredictionFeedback);
 
 // Frontend error reporting
 app.post('/api/report-error', (req, res) => {
