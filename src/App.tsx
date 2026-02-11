@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { reportError } from './utils/reportError';
 import { CartoonHeader } from './components/CartoonHeader';
 import { CartoonTerminalCard } from './components/CartoonTerminalCard';
 import { CartoonLocationPermission } from './components/CartoonLocationPermission';
@@ -147,7 +148,7 @@ function App() {
                       ferryName: predictedFerryName || 'MV Malita',
                       correct: true,
                     }),
-                  });
+                  }).catch((err) => reportError('Feedback fetch', err));
                 }}
                 className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl border-2 border-green-700"
               >
@@ -165,7 +166,7 @@ function App() {
                       ferryName: predictedFerryName || 'MV Malita',
                       correct: false,
                     }),
-                  });
+                  }).catch((err) => reportError('Feedback fetch', err));
                 }}
                 className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl border-2 border-red-700"
               >

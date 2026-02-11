@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import type { Request, Response } from 'express';
+import { sendTelegramAlert, sendTelegramMessage, isTelegramConfigured } from './telegram.js';
 
 // Configure web-push with VAPID keys
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
@@ -42,6 +43,7 @@ export async function handleSendPush(req: Request, res: Response) {
       return;
     }
     console.error('Push send error:', err);
+    sendTelegramAlert(`Push send error: ${err}`);
     res.status(500).json({ error: 'Failed to send push notification' });
   }
 }
@@ -54,10 +56,7 @@ export async function handlePredictionFeedback(req: Request, res: Response) {
     return;
   }
 
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!botToken || !chatId) {
+  if (!isTelegramConfigured()) {
     console.warn('Telegram not configured, skipping feedback forwarding');
     res.json({ ok: true, telegram: false });
     return;
@@ -76,22 +75,17 @@ export async function handlePredictionFeedback(req: Request, res: Response) {
   ].join('\n');
 
   try {
-    const resp = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text: message }),
-      }
-    );
+    const resp = await sendTelegramMessage(message);
 
     if (!resp.ok) {
       console.error('Telegram API error:', await resp.text());
+      sendTelegramAlert(`Feedback Telegram error: ${resp.status}`);
     }
 
     res.json({ ok: true });
   } catch (err) {
     console.error('Telegram send error:', err);
+    sendTelegramAlert(`Feedback Telegram error: ${err}`);
     res.status(500).json({ error: 'Failed to send Telegram message' });
   }
 }
