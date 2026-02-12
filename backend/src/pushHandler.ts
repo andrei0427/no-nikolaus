@@ -13,7 +13,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 const VALID_TERMINALS = ['cirkewwa', 'mgarr'];
 
-function isValidSubscription(sub: unknown): sub is { endpoint: string; keys: { p256dh: string; auth: string } } {
+export function isValidSubscription(sub: unknown): sub is { endpoint: string; keys: { p256dh: string; auth: string } } {
   if (!sub || typeof sub !== 'object') return false;
   const s = sub as Record<string, unknown>;
   if (typeof s.endpoint !== 'string' || !s.endpoint.startsWith('https://')) return false;
@@ -24,6 +24,8 @@ function isValidSubscription(sub: unknown): sub is { endpoint: string; keys: { p
 
 export async function handleSendPush(req: Request, res: Response) {
   const { subscription, terminal, ferryName } = req.body;
+
+  console.log(req.body)
 
   if (!subscription || !terminal || !ferryName) {
     res.status(400).json({ error: 'Missing subscription, terminal, or ferryName' });

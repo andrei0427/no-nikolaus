@@ -31,7 +31,7 @@ function mockReqRes(body: Record<string, unknown>) {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
-  } as never;
+  } as any;
   return { req, res };
 }
 
@@ -56,7 +56,7 @@ describe('handleSendPush', () => {
     vi.mocked(webpush.sendNotification).mockResolvedValue({ statusCode: 201 } as never);
 
     const { req, res } = mockReqRes({
-      subscription: { endpoint: 'https://example.com/push' },
+      subscription: { endpoint: 'https://example.com/push', keys: { p256dh: 'hello', auth: 'hello' } },
       terminal: 'cirkewwa',
       ferryName: 'MV Malita',
     });
@@ -69,7 +69,7 @@ describe('handleSendPush', () => {
     vi.mocked(webpush.sendNotification).mockRejectedValue({ statusCode: 410 });
 
     const { req, res } = mockReqRes({
-      subscription: { endpoint: 'https://example.com/push' },
+      subscription: { endpoint: 'https://example.com/push', keys: { p256dh: 'hello', auth: 'hello' } },
       terminal: 'cirkewwa',
       ferryName: 'MV Malita',
     });
