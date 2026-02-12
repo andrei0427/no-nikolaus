@@ -24,7 +24,7 @@ export function FerryIcon({
         className={className}
         style={{ opacity }}
       >
-        {/* Evil ferry - Nikolaus */}
+        {/* Nikolaus ferry */}
         {/* Hull */}
         <path
           d="M10 45 L20 60 L80 60 L90 45 L85 35 L15 35 Z"
@@ -36,23 +36,23 @@ export function FerryIcon({
         <rect x="20" y="25" width="60" height="12" rx="2" fill="#4A4A4A" stroke="#333" strokeWidth="1" />
         {/* Smokestack */}
         <rect x="55" y="10" width="12" height="18" rx="1" fill="#2D2D2D" stroke="#1a1a1a" strokeWidth="1" />
-        {/* Evil smoke puffs */}
+        {/* Smoke puffs */}
         <circle cx="61" cy="5" r="4" fill="#555" opacity="0.7" />
         <circle cx="65" cy="2" r="3" fill="#666" opacity="0.5" />
         {/* Cabin windows */}
         <rect x="25" y="28" width="6" height="6" rx="1" fill="#FFE082" />
         <rect x="35" y="28" width="6" height="6" rx="1" fill="#FFE082" />
         <rect x="45" y="28" width="6" height="6" rx="1" fill="#FFE082" />
-        {/* Evil face */}
-        {/* Angry eyebrows */}
+        {/* Expressive face */}
+        {/* Eyebrows */}
         <path d="M25 42 L35 38" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
         <path d="M45 38 L55 42" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
-        {/* Evil eyes */}
+        {/* Expressive eyes */}
         <circle cx="32" cy="44" r="4" fill="#FFEB3B" />
         <circle cx="32" cy="44" r="2" fill="#1a1a1a" />
         <circle cx="48" cy="44" r="4" fill="#FFEB3B" />
         <circle cx="48" cy="44" r="2" fill="#1a1a1a" />
-        {/* Evil grin */}
+        {/* Grin */}
         <path
           d="M28 52 Q40 58 52 52"
           stroke="#1a1a1a"
@@ -78,7 +78,7 @@ export function FerryIcon({
         >
           NIKOLAUS
         </text>
-        {/* Flames/aura effect */}
+        {/* Aura effect */}
         {!isGhost && (
           <>
             <path d="M8 50 Q5 45 10 40" stroke="#FF5722" strokeWidth="2" fill="none" opacity="0.7" />

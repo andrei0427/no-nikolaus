@@ -8,7 +8,7 @@
   --wave-foam: #E1F5FE;
   --safe-green: #81C784;
   --caution-yellow: #FFD54F;
-  --avoid-red: #E57373;
+  --docked-red: #E57373;
   --nikolaus-red: #C62828;
   --friendly-blue: #64B5F6;
   --card-bg: #FFFDE7;
@@ -92,8 +92,8 @@ h1, h2, h3, h4, h5, h6 {
   text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
 }
 
-.status-avoid {
-  background: linear-gradient(135deg, #EF9A9A 0%, var(--avoid-red) 100%);
+.status-docked-here {
+  background: linear-gradient(135deg, #EF9A9A 0%, var(--docked-red) 100%);
   color: #B71C1C;
   border: 3px solid #C62828;
   text-shadow: 1px 1px 0 rgba(255,255,255,0.5);

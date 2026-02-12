@@ -5,7 +5,7 @@ import App from './App'
 import { reportError } from './utils/reportError'
 
 window.addEventListener('error', (event) => {
-  reportError('Uncaught', `${event.message} at ${event.filename}:${event.lineno}`)
+  reportError('Uncaught', event.error ?? `${event.message} at ${event.filename}:${event.lineno}`)
 })
 
 window.addEventListener('unhandledrejection', (event) => {

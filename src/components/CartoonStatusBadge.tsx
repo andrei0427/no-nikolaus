@@ -1,24 +1,24 @@
-import { SafetyStatus } from '../types';
+import { NikolausStatus } from '../types';
 
 interface CartoonStatusBadgeProps {
-  status: SafetyStatus;
+  status: NikolausStatus;
   reason: string;
 }
 
 const statusConfig = {
-  SAFE: {
-    text: 'SAFE!',
+  ALL_CLEAR: {
+    text: 'ALL CLEAR',
     className: 'status-safe',
     animation: 'animate-pulse-glow',
   },
-  CAUTION: {
-    text: 'CAUTION',
+  HEADS_UP: {
+    text: 'HEADS UP',
     className: 'status-caution',
     animation: '',
   },
-  AVOID: {
-    text: 'AVOID!',
-    className: 'status-avoid',
+  DOCKED_HERE: {
+    text: 'DOCKED HERE',
+    className: 'status-docked-here',
     animation: '',
   },
 };

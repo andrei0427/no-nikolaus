@@ -60,13 +60,27 @@ app.post('/api/prediction-feedback', feedbackLimiter, handlePredictionFeedback);
 
 // Frontend error reporting
 app.post('/api/report-error', (req, res) => {
-  const { source, error } = req.body;
+  const { source, error, stack, url, userAgent, screen, timestamp } = req.body;
   if (!source || !error) {
     res.status(400).json({ error: 'Missing source or error' });
     return;
   }
-  console.error(`[Frontend] ${source}: ${error}`);
-  sendTelegramAlert(`Frontend error (${source}): ${error}`);
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  console.error(`[Frontend] ${source}: ${error}`, { ip, url, userAgent });
+
+  const lines = [
+    `⚠️ Frontend error`,
+    `Source: ${source}`,
+    `Error: ${error}`,
+    stack ? `Stack: ${stack.slice(0, 500)}` : null,
+    `URL: ${url || 'N/A'}`,
+    `IP: ${ip}`,
+    `UA: ${userAgent || 'N/A'}`,
+    screen ? `Screen: ${screen}` : null,
+    `Time: ${timestamp || new Date().toISOString()}`,
+  ].filter(Boolean).join('\n');
+
+  sendTelegramAlert(lines);
   res.json({ ok: true });
 });
 

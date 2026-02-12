@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Vessel, PortVehicleData, FerrySchedule } from '../types';
 import { reportError } from '../utils/reportError';
-
-const API_URL = import.meta.env.VITE_API_URL || '';
+import { API_URL } from '../utils/apiUrl';
 
 interface UseVesselStreamResult {
   vessels: Vessel[];

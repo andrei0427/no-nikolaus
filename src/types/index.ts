@@ -24,7 +24,7 @@ export type VesselState =
 
 export type Terminal = 'cirkewwa' | 'mgarr';
 
-export type SafetyStatus = 'SAFE' | 'CAUTION' | 'AVOID';
+export type NikolausStatus = 'ALL_CLEAR' | 'HEADS_UP' | 'DOCKED_HERE';
 
 export interface TerminalCoordinates {
   lat: number;
@@ -33,7 +33,7 @@ export interface TerminalCoordinates {
 
 export interface TerminalStatus {
   terminal: Terminal;
-  status: SafetyStatus;
+  status: NikolausStatus;
   reason: string;
   nikolausState: VesselState;
   nikolausEta?: number; // minutes

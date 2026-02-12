@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  define: {
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || ''),
+  },
   server: {
     proxy: {
       '/api': {
@@ -17,9 +20,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/*.png'],
       manifest: {
-        name: 'No Nikolaus',
-        short_name: 'NoNikolaus',
-        description: 'Check if you\'ll encounter the Nikolaus ferry',
+        name: "Where's Nikolaus?",
+        short_name: 'WheresNikolaus',
+        description: 'Track the Nikolaus ferry between Malta and Gozo',
         start_url: '/',
         display: 'standalone',
         background_color: '#f8fafc',

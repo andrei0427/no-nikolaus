@@ -50,6 +50,7 @@ export function predictLikelyFerry(
 
   // For each vessel, estimate when it will be ready to depart from the target terminal
   const candidates: { vessel: Vessel; readyMinutes: number; detail: string }[] = [];
+  const dockedAtTerminal: Vessel[] = [];
 
   for (const vessel of vessels) {
     const { state } = vessel;
@@ -67,8 +68,7 @@ export function predictLikelyFerry(
       (terminal === 'mgarr' && state === 'EN_ROUTE_TO_CIRKEWWA');
 
     if (isDocked) {
-      // Already at terminal — can serve the very next departure
-      candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
+      dockedAtTerminal.push(vessel);
     } else if (isEnRoute) {
       const dist = distanceToTerminal(vessel.LAT, vessel.LON, TERMINALS[terminal]);
       const eta = estimateArrivalTime(dist, vessel.SPEED);
@@ -88,6 +88,30 @@ export function predictLikelyFerry(
       if (eta !== Infinity) {
         const readyMinutes = nowMinutes + eta + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
         candidates.push({ vessel, readyMinutes, detail: `returning via ${otherTerminal === 'mgarr' ? 'Gozo' : 'Malta'}` });
+      }
+    }
+  }
+
+  // Handle docked vessels: if a vessel departs before the user arrives,
+  // it won't be available — set readyMinutes to after the round trip.
+  // Assign departures in order so multiple docked vessels don't all claim the same slot.
+  if (dockedAtTerminal.length > 0) {
+    if (depTimes.length > 0 && userArrivalMinutes !== null) {
+      const futureDeps = depTimes.filter(d => d.minutes >= nowMinutes);
+      for (let i = 0; i < dockedAtTerminal.length; i++) {
+        const vessel = dockedAtTerminal[i];
+        const assignedDep = futureDeps[i];
+        if (assignedDep && assignedDep.minutes < userArrivalMinutes) {
+          // Vessel departs before user arrives — on round trip
+          const returnReady = assignedDep.minutes + AVERAGE_CROSSING_TIME + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
+          candidates.push({ vessel, readyMinutes: returnReady, detail: 'returning after round trip' });
+        } else {
+          candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
+        }
+      }
+    } else {
+      for (const vessel of dockedAtTerminal) {
+        candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
       }
     }
   }

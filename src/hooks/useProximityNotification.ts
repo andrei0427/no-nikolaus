@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { haversineDistance } from '../utils/coordinates';
 import { TERMINALS } from '../utils/constants';
 import { reportError } from '../utils/reportError';
+import { API_URL } from '../utils/apiUrl';
 import type { Terminal } from '../types';
 
 const PROXIMITY_THRESHOLD_KM = 0.5; // 500 meters
@@ -47,7 +48,7 @@ export function useProximityNotification({
     sentRef.current = true;
     sessionStorage.setItem(storageKey, '1');
 
-    fetch('/api/send-prediction-push', {
+    fetch(`${API_URL}/api/send-prediction-push`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

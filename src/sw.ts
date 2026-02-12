@@ -6,6 +6,7 @@ import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 declare const self: ServiceWorkerGlobalScope;
+declare const __API_URL__: string;
 
 // Workbox precaching (injected by vite-plugin-pwa)
 precacheAndRoute(self.__WB_MANIFEST);
@@ -64,7 +65,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'yes' || event.action === 'no') {
     // User tapped an action button — send feedback
     event.waitUntil(
-      fetch('/api/prediction-feedback', {
+      fetch(`${__API_URL__}/api/prediction-feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

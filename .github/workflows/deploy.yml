@@ -17,6 +17,9 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
 
       - name: Create Pages project if needed
         uses: cloudflare/wrangler-action@v3

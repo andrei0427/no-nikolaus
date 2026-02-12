@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
+import { API_URL } from './utils/apiUrl';
 import { reportError } from './utils/reportError';
 import { CartoonHeader } from './components/CartoonHeader';
+import { NikolausStatusStrip } from './components/NikolausStatusStrip';
 import { CartoonTerminalCard } from './components/CartoonTerminalCard';
 import { CartoonLocationPermission } from './components/CartoonLocationPermission';
 import { CartoonMap } from './components/CartoonMap';
-import { WaveBorder } from './components/WaveBorder';
+import { CartoonWebcams } from './components/CartoonWebcams';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { useVesselStream } from './hooks/useVesselStream';
 import { useGeolocation } from './hooks/useGeolocation';
@@ -40,8 +42,9 @@ function App() {
         nikolaus,
         terminal: 'cirkewwa',
         driveTime: driveTime.cirkewwa,
+        schedule,
       }),
-    [nikolaus, driveTime.cirkewwa]
+    [nikolaus, driveTime.cirkewwa, schedule]
   );
 
   const mgarrStatus = useMemo(
@@ -50,8 +53,9 @@ function App() {
         nikolaus,
         terminal: 'mgarr',
         driveTime: driveTime.mgarr,
+        schedule,
       }),
-    [nikolaus, driveTime.mgarr]
+    [nikolaus, driveTime.mgarr, schedule]
   );
 
   const cirkewwaFerryPrediction = useMemo(
@@ -111,20 +115,9 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top wave border */}
-      <WaveBorder position="top" />
-
       <CartoonHeader connected={connected} lastUpdate={lastUpdate} />
 
-      <CartoonLocationPermission
-        onRequestPermission={requestAllPermissions}
-        loading={geoLoading}
-        permissionDenied={permissionDenied}
-        hasLocation={hasLocation}
-        error={geoError}
-      />
-
-      <PwaInstallBanner />
+      <NikolausStatusStrip nikolaus={nikolaus} />
 
       {/* TEMPORARY: Test prediction feedback modal */}
       {showTestModal && (
@@ -140,7 +133,7 @@ function App() {
                 onClick={() => {
                   setShowTestModal(false);
                   setShowThankYou('yes');
-                  fetch('/api/prediction-feedback', {
+                  fetch(`${API_URL}/api/prediction-feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -158,7 +151,7 @@ function App() {
                 onClick={() => {
                   setShowTestModal(false);
                   setShowThankYou('no');
-                  fetch('/api/prediction-feedback', {
+                  fetch(`${API_URL}/api/prediction-feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -205,10 +198,24 @@ function App() {
         </div>
       )}
 
+      <main className="flex-1 max-w-4xl mx-auto px-4 py-4 w-full space-y-4">
+        {/* Map — promoted to top for instant visual context */}
+        {vessels.length > 0 && (
+          <CartoonMap vessels={vessels} />
+        )}
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-6 w-full">
+        <CartoonLocationPermission
+          onRequestPermission={requestAllPermissions}
+          loading={geoLoading}
+          permissionDenied={permissionDenied}
+          hasLocation={hasLocation}
+          error={geoError}
+        />
+
+        <PwaInstallBanner />
+
         {/* Terminal cards */}
-        <div className={`grid gap-6 mb-6 ${showSingleTerminal ? 'grid-cols-1 max-w-md mx-auto' : 'grid-cols-1 sm:grid-cols-2'}`}>
+        <div className={`grid gap-4 ${showSingleTerminal ? 'grid-cols-1 max-w-md mx-auto' : 'grid-cols-1 sm:grid-cols-2'}`}>
           {(!showSingleTerminal || autoSelectedTerminal === 'cirkewwa') && (
             <CartoonTerminalCard
               terminal="cirkewwa"
@@ -239,42 +246,26 @@ function App() {
 
         {/* Toggle to show/hide both terminals */}
         {autoSelectedTerminal && (
-          <div className="text-center mb-6">
+          <div className="text-center">
             <button
               onClick={() => setShowBothTerminals((prev) => !prev)}
-              className="bg-white bg-opacity-70 hover:bg-opacity-90 text-amber-800 font-medium text-base px-5 py-2.5 rounded-full border-2 border-amber-300 shadow-md transition-all duration-200"
+              className="bg-white bg-opacity-70 hover:bg-opacity-90 text-amber-800 font-medium text-sm px-4 py-2 rounded-full border border-amber-300 shadow-sm transition-all duration-200"
             >
               {showBothTerminals ? 'Show only my terminal' : 'View both terminals'}
             </button>
           </div>
         )}
 
-        {/* Cartoon map */}
-        {vessels.length > 0 && (
-          <CartoonMap vessels={vessels} />
-        )}
-
-        {/* User location indicator */}
-        {hasLocation && (
-          <div className="mt-4 text-center">
-            <span className="inline-block bg-white bg-opacity-80 px-4 py-2 rounded-full text-amber-800 font-medium text-lg shadow-md">
-              Your location:{' '}
-              {autoSelectedTerminal === 'mgarr' ? 'Gozo' : 'Malta'}
-            </span>
-          </div>
-        )}
+        {/* Webcams — extracted from terminal cards */}
+        <CartoonWebcams />
 
         {/* Footer */}
-        <footer className="mt-8 text-center text-white text-opacity-80 text-base pb-4">
-          <p>Data from Gozo Channel vessel tracking</p>
-          <p className="mt-1 text-sm">
-            Predictions are estimates and may not reflect actual ferry assignments
-          </p>
+        <footer className="text-center text-white text-opacity-80 text-sm pb-4 pt-2 space-y-1">
+          <p>Not affiliated with Gozo Channel Co. — a community project</p>
+          <p>Predictions are estimates and may not reflect actual ferry assignments</p>
+          <p className="text-xs text-white text-opacity-60">Data from Gozo Channel vessel tracking</p>
         </footer>
       </main>
-
-      {/* Bottom wave border */}
-      <WaveBorder position="bottom" />
     </div>
   );
 }

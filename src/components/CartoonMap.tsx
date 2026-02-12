@@ -74,10 +74,6 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
 
   return (
     <div className="cartoon-card p-4">
-      <h3 className="text-2xl font-bold text-center text-amber-900 mb-4 font-[Fredoka]">
-        Ferry Tracker
-      </h3>
-
       <div
         className="relative bg-gradient-to-br from-sky-300 via-sky-400 to-sky-500 rounded-xl overflow-hidden"
         style={{ aspectRatio: `${VB_W} / ${VB_H}` }}
@@ -250,7 +246,7 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
         })()}
 
         {/* Legend */}
-        <div className="absolute bottom-2 right-2 bg-white bg-opacity-95 rounded-lg p-2 shadow-lg z-20">
+        <div className="absolute bottom-2 left-2 bg-white bg-opacity-95 rounded-lg p-2 shadow-lg z-20">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
               <FerryIcon name="Nikolaus" isNikolaus size={32} />

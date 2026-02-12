@@ -69,39 +69,35 @@ export function PwaInstallBanner() {
   if (!visible) return null;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 mt-2">
-      <div className="relative bg-white bg-opacity-90 rounded-2xl border-2 border-amber-400 shadow-lg p-4">
+    <div className="mx-auto max-w-4xl px-4 mt-1">
+      <div className="relative flex items-center justify-center gap-2 bg-white bg-opacity-80 rounded-xl border border-amber-300 shadow px-3 py-1.5">
         <button
           onClick={handleDismiss}
-          className="absolute top-2 right-3 text-amber-400 hover:text-amber-600 text-xl leading-none font-bold"
+          className="absolute top-1 right-2 text-amber-400 hover:text-amber-600 text-sm leading-none font-bold"
           aria-label="Dismiss"
         >
           &times;
         </button>
 
-        <div className="text-center pr-4">
-          <p className="font-bold text-amber-900 text-sm mb-1">
-            Add No Nikolaus to your home screen!
-          </p>
+        <span className="text-xs font-semibold text-amber-800">Add to home screen</span>
 
-          {platform === 'ios' ? (
-            <p className="text-amber-700 text-xs">
-              Tap{' '}
-              <svg className="inline w-4 h-4 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14M5 12l7-7 7 7" />
-                <rect x="4" y="18" width="16" height="2" rx="1" />
-              </svg>
-              {' '}Share, then <strong>"Add to Home Screen"</strong>
-            </p>
-          ) : (
-            <button
-              onClick={handleInstall}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-4 py-1.5 rounded-full border-2 border-amber-600 shadow transition-colors"
-            >
-              Install App
-            </button>
-          )}
-        </div>
+        {platform === 'ios' ? (
+          <span className="text-amber-600 text-xs">
+            Tap{' '}
+            <svg className="inline w-3.5 h-3.5 -mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7-7 7 7" />
+              <rect x="4" y="18" width="16" height="2" rx="1" />
+            </svg>
+            {' '}→ <strong>Add to Home Screen</strong>
+          </span>
+        ) : (
+          <button
+            onClick={handleInstall}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-0.5 rounded-full border border-amber-600 transition-colors"
+          >
+            Install
+          </button>
+        )}
       </div>
     </div>
   );

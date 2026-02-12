@@ -87,6 +87,31 @@ describe('predictLikelyFerry', () => {
     expect(result.ferry!.name).toBe('MV Malita');
     expect(result.departureTime).toBe('14:30');
   });
+
+  it('does not predict docked vessel that departs before user arrives', () => {
+    // Time: 13:50, departure at 14:00 (in 10 min), user driveTime 30 → arrives 14:35
+    // Vessel departs at 14:00 before user arrives — should not show as "docked"
+    vi.setSystemTime(new Date('2026-02-10T13:50:00'));
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const other = makeVessel({
+      MMSI: 248692000,
+      name: "MV Ta' Pinu",
+      state: 'DOCKED_MGARR', // docked at other terminal
+      LAT: 36.025,
+      LON: 14.299,
+    });
+    const result = predictLikelyFerry([nikolaus, other], 'cirkewwa', 30, schedule);
+    // Nikolaus departs at 14:00, round trip ~80 min, back ~15:20
+    // Ta' Pinu at other terminal, crossing over ~55 min, ready ~14:45
+    // User arrives 14:35, so Ta' Pinu should be the prediction, not Nikolaus
+    expect(result.ferry).toBeTruthy();
+    expect(result.ferry!.name).not.toBe('MV Nikolaos');
+  });
 });
 
 describe('getNextDeparture', () => {

@@ -1,4 +1,4 @@
-import { Vessel, Terminal, TerminalStatus } from '../types';
+import { Vessel, Terminal, TerminalStatus, FerrySchedule } from '../types';
 import { distanceToTerminal as calcDistanceToTerminal, estimateArrivalTime } from './coordinates';
 import {
   TERMINALS,
@@ -10,17 +10,42 @@ interface PredictionInput {
   nikolaus: Vessel | null;
   terminal: Terminal;
   driveTime: number | null;
+  schedule?: FerrySchedule | null;
+}
+
+function parseTime(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Estimate how many minutes from now Nikolaus will depart this terminal.
+ * Uses the schedule when available, falls back to TURNAROUND_TIME.
+ */
+function estimateDepartureMinutes(terminal: Terminal, schedule?: FerrySchedule | null): number {
+  if (schedule) {
+    const times = terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr;
+    if (times && times.length > 0) {
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const nextDep = times.find(t => parseTime(t) >= nowMinutes);
+      if (nextDep) {
+        return parseTime(nextDep) - nowMinutes;
+      }
+    }
+  }
+  return TURNAROUND_TIME;
 }
 
 export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
-  const { nikolaus, terminal, driveTime } = input;
+  const { nikolaus, terminal, driveTime, schedule } = input;
 
-  // If we can't find Nikolaus, assume it's safe (might be in maintenance)
+  // If we can't find Nikolaus, assume all clear (might be in maintenance)
   if (!nikolaus) {
     return {
       terminal,
-      status: 'SAFE',
-      reason: 'Nikolaus location unknown - likely not in service',
+      status: 'ALL_CLEAR',
+      reason: 'Nikolaus location unknown — likely not in service',
       nikolausState: 'UNKNOWN',
     };
   }
@@ -47,23 +72,25 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
 
   // Case 1: Nikolaus is docked at this terminal
   if (isDockedAtThisTerminal) {
+    const departureMinutes = estimateDepartureMinutes(terminal, schedule);
+
     // If we have drive time, check if user will arrive after Nikolaus departs
     if (userArrivalTime !== null) {
-      if (userArrivalTime > TURNAROUND_TIME + 10) {
+      if (userArrivalTime > departureMinutes + 10) {
         // User arrives well after Nikolaus should have departed
         return {
           terminal,
-          status: 'SAFE',
-          reason: 'Nikolaus should depart before you arrive',
+          status: 'ALL_CLEAR',
+          reason: 'Nikolaus should leave before you arrive',
           nikolausState,
           driveTime: driveTime ?? undefined,
         };
-      } else if (userArrivalTime > TURNAROUND_TIME) {
+      } else if (userArrivalTime > departureMinutes) {
         // Timing is close
         return {
           terminal,
-          status: 'CAUTION',
-          reason: 'Nikolaus is docked here - timing uncertain',
+          status: 'HEADS_UP',
+          reason: 'Nikolaus is docked here — timing uncertain',
           nikolausState,
           driveTime: driveTime ?? undefined,
         };
@@ -73,8 +100,8 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
     // No drive time or user arrives during turnaround
     return {
       terminal,
-      status: 'AVOID',
-      reason: 'Nikolaus is currently docked here and likely next to depart',
+      status: 'DOCKED_HERE',
+      reason: 'Nikolaus is docked here — likely next to depart',
       nikolausState,
       driveTime: driveTime ?? undefined,
     };
@@ -97,7 +124,7 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
         // User arrives before Nikolaus
         return {
           terminal,
-          status: 'SAFE',
+          status: 'ALL_CLEAR',
           reason: `You should arrive before Nikolaus (ETA: ${Math.round(eta)} min)`,
           nikolausState,
           nikolausEta: Math.round(eta),
@@ -107,8 +134,8 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
         // User arrives well after Nikolaus would have departed
         return {
           terminal,
-          status: 'SAFE',
-          reason: 'Nikolaus should depart before you arrive',
+          status: 'ALL_CLEAR',
+          reason: 'Nikolaus should leave before you arrive',
           nikolausState,
           nikolausEta: Math.round(eta),
           driveTime: driveTime ?? undefined,
@@ -117,8 +144,8 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
         // Timing is uncertain
         return {
           terminal,
-          status: 'CAUTION',
-          reason: `Nikolaus arriving in ~${Math.round(eta)} min - timing uncertain`,
+          status: 'HEADS_UP',
+          reason: `Nikolaus arriving in ~${Math.round(eta)} min — timing uncertain`,
           nikolausState,
           nikolausEta: Math.round(eta),
           driveTime: driveTime ?? undefined,
@@ -126,10 +153,10 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
       }
     }
 
-    // No drive time available, just warn about Nikolaus approaching
+    // No drive time available, just note Nikolaus approaching
     return {
       terminal,
-      status: 'CAUTION',
+      status: 'HEADS_UP',
       reason: `Nikolaus en route here (ETA: ~${eta === Infinity ? '?' : Math.round(eta)} min)`,
       nikolausState,
       nikolausEta: eta === Infinity ? undefined : Math.round(eta),
@@ -141,7 +168,7 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
   if (isAtOtherTerminal) {
     return {
       terminal,
-      status: 'SAFE',
+      status: 'ALL_CLEAR',
       reason: `Nikolaus is docked at ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
@@ -152,7 +179,7 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
   if (isEnRouteAway) {
     return {
       terminal,
-      status: 'SAFE',
+      status: 'ALL_CLEAR',
       reason: `Nikolaus is heading to ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
@@ -162,10 +189,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
   // Case 5: Unknown state
   return {
     terminal,
-    status: 'CAUTION',
+    status: 'HEADS_UP',
     reason: 'Nikolaus location uncertain',
     nikolausState,
     driveTime: driveTime ?? undefined,
   };
 }
-
