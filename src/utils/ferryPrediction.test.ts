@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { predictLikelyFerry, getNextDeparture } from './ferryPrediction';
-import type { Vessel, FerrySchedule } from '../types';
+import type { Vessel, FerrySchedule, PortVehicleDetections } from '../types';
 
 function makeVessel(overrides: Partial<Vessel> = {}): Vessel {
   return {
@@ -111,6 +111,129 @@ describe('predictLikelyFerry', () => {
     // User arrives 14:35, so Ta' Pinu should be the prediction, not Nikolaus
     expect(result.ferry).toBeTruthy();
     expect(result.ferry!.name).not.toBe('MV Nikolaos');
+  });
+
+  // --- Queue-aware tests ---
+
+  it('queue fits on one ferry — predicts first docked ferry', () => {
+    const vessel = makeVessel({ state: 'DOCKED_CIRKEWWA' });
+    const queueData: PortVehicleDetections = { car: 50, truck: 0, motorbike: 0 };
+    const result = predictLikelyFerry([vessel], 'cirkewwa', 10, schedule, queueData);
+    expect(result.ferry!.name).toBe('MV Malita');
+    expect(result.departureTime).toBe('14:00');
+    expect(result.confidence).toBe('high');
+  });
+
+  it('queue needs 2 loads — skips first ferry, predicts second', () => {
+    // MV Malita capacity = 138, queue = 200 cars → needs 2 ferries
+    // Time: 13:00, schedule has 14:00 and 15:00 departures
+    const malita = makeVessel({
+      MMSI: 215145000,
+      name: 'MV Malita',
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const queueData: PortVehicleDetections = { car: 200, truck: 0, motorbike: 0 };
+    const result = predictLikelyFerry([malita, nikolaus], 'cirkewwa', 10, schedule, queueData);
+    // First ferry (Malita, 138 cap) drains 138, remaining = 62
+    // Second ferry (Nikolaus, 160 cap) drains 160, remaining = -98 → user's ferry
+    expect(result.ferry!.name).toBe('MV Nikolaos');
+    expect(result.departureTime).toBe('15:00');
+  });
+
+  it('queue needs 3 loads — skips two ferries', () => {
+    // Need 3 departures to drain 350 cars
+    const malita = makeVessel({
+      MMSI: 215145000,
+      name: 'MV Malita',
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    // Schedule: 14:00, 15:00, 20:00
+    // Malita takes 14:00 (138 cap → remaining 212)
+    // Nikolaus takes 15:00 (160 cap → remaining 52)
+    // Next: Malita returns. Ready at 14:00 + 25 cross + 15 turn + 25 cross + 15 turn = 14:00 + 80 = 15:20
+    // But Malita is already assigned. With only 2 vessels and 3 needed loads,
+    // only 2 departures get vessels assigned. Third departure has no vessel ready.
+    // So it falls through to "heavy queue" for 350 cars.
+    const queueData: PortVehicleDetections = { car: 350, truck: 0, motorbike: 0 };
+    const result = predictLikelyFerry([malita, nikolaus], 'cirkewwa', 10, schedule, queueData);
+    // With 2 assigned departures draining only 298, remaining is still positive
+    expect(result.confidence).toBe('low');
+    expect(result.reason).toContain('Heavy queue');
+  });
+
+  it('queue drain before user arrives — ferry departs before user but still drains queue', () => {
+    // Time: 13:00, user arrives at 13:00 + 60 + 15 = 14:15
+    // Schedule: 14:00 and 15:00
+    // Queue: 100 cars
+    // First ferry departs at 14:00 (before user arrives at 14:15) — drains queue
+    // Second ferry departs at 15:00 (after user arrives) — user boards this one
+    const malita = makeVessel({
+      MMSI: 215145000,
+      name: 'MV Malita',
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const queueData: PortVehicleDetections = { car: 100, truck: 0, motorbike: 0 };
+    const result = predictLikelyFerry([malita, nikolaus], 'cirkewwa', 60, schedule, queueData);
+    // Malita drains 138 at 14:00, remaining <= 0, but 14:00 < user arrival 14:15
+    // Nikolaus at 15:00, remaining already <= 0 AND 15:00 >= 14:15 → user's ferry
+    expect(result.ferry!.name).toBe('MV Nikolaos');
+    expect(result.departureTime).toBe('15:00');
+  });
+
+  it('no queue data — behaves like current logic (no skipping)', () => {
+    const malita = makeVessel({
+      MMSI: 215145000,
+      name: 'MV Malita',
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    // No queueData — should predict first available ferry
+    const result = predictLikelyFerry([malita, nikolaus], 'cirkewwa', 10, schedule);
+    expect(result.ferry!.name).toBe('MV Malita');
+    expect(result.departureTime).toBe('14:00');
+  });
+
+  it('queue with trucks uses car-equivalent conversion', () => {
+    // 100 cars + 20 trucks (20 * 3 = 60 car-equiv) = 160 total
+    // MV Malita capacity = 138, so needs 2nd ferry
+    const malita = makeVessel({
+      MMSI: 215145000,
+      name: 'MV Malita',
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const nikolaus = makeVessel({
+      MMSI: 237593100,
+      name: 'MV Nikolaos',
+      isNikolaus: true,
+      state: 'DOCKED_CIRKEWWA',
+    });
+    const queueData: PortVehicleDetections = { car: 100, truck: 20, motorbike: 0 };
+    const result = predictLikelyFerry([malita, nikolaus], 'cirkewwa', 10, schedule, queueData);
+    expect(result.ferry!.name).toBe('MV Nikolaos');
+    expect(result.departureTime).toBe('15:00');
   });
 });
 

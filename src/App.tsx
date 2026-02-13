@@ -59,13 +59,13 @@ function App() {
   );
 
   const cirkewwaFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa, schedule),
-    [vessels, driveTime.cirkewwa, schedule]
+    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa, schedule, portVehicleData.cirkewwa),
+    [vessels, driveTime.cirkewwa, schedule, portVehicleData.cirkewwa]
   );
 
   const mgarrFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr, schedule),
-    [vessels, driveTime.mgarr, schedule]
+    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr, schedule, portVehicleData.mgarr),
+    [vessels, driveTime.mgarr, schedule, portVehicleData.mgarr]
   );
 
   const cirkewwaNextDeparture = useMemo(

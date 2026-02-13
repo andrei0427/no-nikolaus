@@ -1,6 +1,14 @@
-import { Vessel, Terminal, VesselState, FerrySchedule } from '../types';
+import { Vessel, Terminal, VesselState, FerrySchedule, PortVehicleDetections } from '../types';
 import { distanceToTerminal, estimateArrivalTime } from './coordinates';
-import { TERMINALS, TURNAROUND_TIME, BUFFER_TIME, AVERAGE_CROSSING_TIME } from './constants';
+import {
+  TERMINALS,
+  TURNAROUND_TIME,
+  BUFFER_TIME,
+  AVERAGE_CROSSING_TIME,
+  FERRY_CAPACITIES,
+  TRUCK_CAR_EQUIVALENT,
+  MOTORBIKE_CAR_EQUIVALENT,
+} from './constants';
 
 export interface FerryPrediction {
   ferry: Vessel | null;
@@ -23,13 +31,18 @@ function parseTime(t: string): number {
 
 /**
  * Predict which ferry will likely serve the user upon arrival at a terminal.
- * Uses the schedule to determine the next catchable departure.
+ *
+ * Algorithm:
+ * 1. Compute vessel readiness (when each vessel can depart from this terminal)
+ * 2. Build departure timeline by assigning vessels to scheduled departure slots
+ * 3. Drain the queue through departures until the user's ferry is found
  */
 export function predictLikelyFerry(
   vessels: Vessel[],
   terminal: Terminal,
   driveTime: number | null,
-  schedule: FerrySchedule | null
+  schedule: FerrySchedule | null,
+  queueData?: PortVehicleDetections | null
 ): FerryPrediction {
   if (vessels.length === 0) {
     return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
@@ -41,16 +54,10 @@ export function predictLikelyFerry(
   // When user arrives at terminal (minutes of day)
   const userArrivalMinutes = driveTime !== null
     ? nowMinutes + driveTime + BUFFER_TIME
-    : null;
+    : nowMinutes;
 
-  // Scheduled departure times for this terminal (minutes of day)
-  const depTimes = schedule
-    ? (terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr)?.map(t => ({ time: t, minutes: parseTime(t) })) ?? []
-    : [];
-
-  // For each vessel, estimate when it will be ready to depart from the target terminal
-  const candidates: { vessel: Vessel; readyMinutes: number; detail: string }[] = [];
-  const dockedAtTerminal: Vessel[] = [];
+  // --- Step A: Vessel readiness ---
+  const readyList: { vessel: Vessel; readyMinutes: number; detail: string }[] = [];
 
   for (const vessel of vessels) {
     const { state } = vessel;
@@ -68,87 +75,155 @@ export function predictLikelyFerry(
       (terminal === 'mgarr' && state === 'EN_ROUTE_TO_CIRKEWWA');
 
     if (isDocked) {
-      dockedAtTerminal.push(vessel);
+      readyList.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
     } else if (isEnRoute) {
       const dist = distanceToTerminal(vessel.LAT, vessel.LON, TERMINALS[terminal]);
       const eta = estimateArrivalTime(dist, vessel.SPEED);
       if (eta !== Infinity) {
-        // Ready after arriving + turnaround
-        candidates.push({ vessel, readyMinutes: nowMinutes + eta + TURNAROUND_TIME, detail: `arrives in ~${Math.round(eta)} min` });
+        readyList.push({ vessel, readyMinutes: nowMinutes + eta + TURNAROUND_TIME, detail: `arrives in ~${Math.round(eta)} min` });
       }
     } else if (isDockedOther) {
-      // Needs to depart other terminal, cross, then turnaround here
       const readyMinutes = nowMinutes + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
       const from = terminal === 'cirkewwa' ? 'Gozo' : 'Malta';
-      candidates.push({ vessel, readyMinutes, detail: `crossing from ${from}` });
+      readyList.push({ vessel, readyMinutes, detail: `crossing from ${from}` });
     } else if (isEnRouteAway) {
       const otherTerminal = terminal === 'cirkewwa' ? 'mgarr' : 'cirkewwa';
       const dist = distanceToTerminal(vessel.LAT, vessel.LON, TERMINALS[otherTerminal]);
       const eta = estimateArrivalTime(dist, vessel.SPEED);
       if (eta !== Infinity) {
         const readyMinutes = nowMinutes + eta + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
-        candidates.push({ vessel, readyMinutes, detail: `returning via ${otherTerminal === 'mgarr' ? 'Gozo' : 'Malta'}` });
+        readyList.push({ vessel, readyMinutes, detail: `returning via ${otherTerminal === 'mgarr' ? 'Gozo' : 'Malta'}` });
       }
     }
   }
 
-  // Handle docked vessels: if a vessel departs before the user arrives,
-  // it won't be available — set readyMinutes to after the round trip.
-  // Assign departures in order so multiple docked vessels don't all claim the same slot.
-  if (dockedAtTerminal.length > 0) {
-    if (depTimes.length > 0 && userArrivalMinutes !== null) {
-      const futureDeps = depTimes.filter(d => d.minutes >= nowMinutes);
-      for (let i = 0; i < dockedAtTerminal.length; i++) {
-        const vessel = dockedAtTerminal[i];
-        const assignedDep = futureDeps[i];
-        if (assignedDep && assignedDep.minutes < userArrivalMinutes) {
-          // Vessel departs before user arrives — on round trip
-          const returnReady = assignedDep.minutes + AVERAGE_CROSSING_TIME + TURNAROUND_TIME + AVERAGE_CROSSING_TIME + TURNAROUND_TIME;
-          candidates.push({ vessel, readyMinutes: returnReady, detail: 'returning after round trip' });
-        } else {
-          candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
-        }
-      }
-    } else {
-      for (const vessel of dockedAtTerminal) {
-        candidates.push({ vessel, readyMinutes: nowMinutes, detail: 'docked' });
-      }
-    }
-  }
+  readyList.sort((a, b) => a.readyMinutes - b.readyMinutes);
 
-  candidates.sort((a, b) => a.readyMinutes - b.readyMinutes);
-
-  if (candidates.length === 0) {
+  if (readyList.length === 0) {
     return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
   }
 
-  // --- Schedule-based prediction ---
-  if (depTimes.length > 0) {
-    const threshold = userArrivalMinutes ?? nowMinutes;
+  // --- Step B: Build departure timeline ---
+  const scheduledTimes = schedule
+    ? (terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr)?.map(t => ({ time: t, minutes: parseTime(t) })) ?? []
+    : [];
 
-    // For each candidate (sorted by readiness), find the first scheduled departure
-    // that is >= both the candidate's readiness and the user's arrival
-    for (const c of candidates) {
-      const minDep = Math.max(c.readyMinutes, threshold);
-      const dep = depTimes.find(d => d.minutes >= minDep);
-      if (dep) {
-        const confidence = c.detail === 'docked' ? 'high' : 'medium';
-        const reason = c.detail === 'docked'
-          ? `${c.vessel.name} departs at ${dep.time}`
-          : `${c.vessel.name} ${c.detail}, departs at ${dep.time}`;
-        return { ferry: c.vessel, confidence, reason, departureTime: dep.time };
+  const futureDeps = scheduledTimes.filter(d => d.minutes >= nowMinutes);
+
+  interface Departure {
+    vessel: Vessel;
+    depMinutes: number;
+    depTime: string | null;
+    capacity: number;
+    detail: string;
+  }
+
+  const departures: Departure[] = [];
+  const assignedVessels = new Set<number>(); // track by MMSI
+
+  if (futureDeps.length > 0) {
+    // Assign vessels to scheduled departure slots
+    for (const dep of futureDeps) {
+      // Find earliest-ready unassigned vessel that's ready by this departure
+      const candidate = readyList.find(
+        r => !assignedVessels.has(r.vessel.MMSI) && r.readyMinutes <= dep.minutes
+      );
+      if (candidate) {
+        assignedVessels.add(candidate.vessel.MMSI);
+        departures.push({
+          vessel: candidate.vessel,
+          depMinutes: dep.minutes,
+          depTime: dep.time,
+          capacity: FERRY_CAPACITIES[candidate.vessel.name] ?? 100,
+          detail: candidate.detail,
+        });
+      }
+    }
+  }
+
+  // If no schedule or no departures could be assigned, use readyList directly
+  if (departures.length === 0) {
+    for (const r of readyList) {
+      departures.push({
+        vessel: r.vessel,
+        depMinutes: r.readyMinutes,
+        depTime: null,
+        capacity: FERRY_CAPACITIES[r.vessel.name] ?? 100,
+        detail: r.detail,
+      });
+    }
+  }
+
+  // --- Step C: Queue drain ---
+  if (queueData) {
+    const remainingQueueInit =
+      queueData.car +
+      queueData.truck * TRUCK_CAR_EQUIVALENT +
+      queueData.motorbike * MOTORBIKE_CAR_EQUIVALENT;
+
+    let remainingQueue = remainingQueueInit;
+
+    for (const dep of departures) {
+      remainingQueue -= dep.capacity;
+      if (remainingQueue <= 0 && dep.depMinutes >= userArrivalMinutes) {
+        const confidence = dep.detail === 'docked' ? 'high' : 'medium';
+        const queueNote = remainingQueueInit > dep.capacity ? ' (queue clears)' : '';
+        const reason = dep.depTime
+          ? `${dep.vessel.name} departs at ${dep.depTime}${queueNote}`
+          : `${dep.vessel.name} is currently docked${queueNote}`;
+        return { ferry: dep.vessel, confidence, reason, departureTime: dep.depTime };
       }
     }
 
+    // Queue never drains or no departure after user arrival
+    if (departures.length > 0) {
+      const last = departures[departures.length - 1];
+      return {
+        ferry: last.vessel,
+        confidence: 'low',
+        reason: 'Heavy queue — expect significant delays',
+        departureTime: last.depTime,
+      };
+    }
+
+    return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
+  }
+
+  // --- No queue data ---
+  // With schedule: find first scheduled departure >= user arrival
+  // Without schedule: find first vessel ready by user arrival (readyMinutes <= userArrival)
+  for (const dep of departures) {
+    const isAvailable = dep.depTime
+      ? dep.depMinutes >= userArrivalMinutes  // scheduled: departs after user arrives
+      : dep.depMinutes <= userArrivalMinutes; // no schedule: ready by user arrival
+    if (isAvailable) {
+      const confidence = dep.detail === 'docked'
+        ? (dep.depTime ? 'high' : 'medium')
+        : 'medium';
+      const reason = dep.depTime
+        ? dep.detail === 'docked'
+          ? `${dep.vessel.name} departs at ${dep.depTime}`
+          : `${dep.vessel.name} ${dep.detail}, departs at ${dep.depTime}`
+        : dep.detail === 'docked'
+          ? `${dep.vessel.name} is currently docked`
+          : `${dep.vessel.name} ${dep.detail}`;
+      return { ferry: dep.vessel, confidence, reason, departureTime: dep.depTime };
+    }
+  }
+
+  // No departures after user arrival (with schedule) or no vessel ready (without)
+  if (futureDeps.length > 0) {
     return { ferry: null, confidence: 'low', reason: 'No more departures today', departureTime: null };
   }
 
-  // --- Fallback without schedule ---
-  const best = candidates[0];
-  if (best.detail === 'docked') {
-    return { ferry: best.vessel, confidence: 'medium', reason: `${best.vessel.name} is currently docked`, departureTime: null };
-  }
-  return { ferry: best.vessel, confidence: 'low', reason: `${best.vessel.name} ${best.detail}`, departureTime: null };
+  // Fallback: return first available vessel
+  const best = readyList[0];
+  return {
+    ferry: best.vessel,
+    confidence: 'low',
+    reason: `${best.vessel.name} ${best.detail}`,
+    departureTime: null,
+  };
 }
 
 /**
