@@ -53,4 +53,6 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            cd /app && npm ci --omit=dev && pm2 restart no-nikolaus-backend
+            cd /app && npm ci --omit=dev
+            pm2 restart no-nikolaus-backend || pm2 start dist/index.js --name no-nikolaus-backend
+            pm2 save
