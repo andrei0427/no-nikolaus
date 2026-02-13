@@ -48,4 +48,7 @@ jobs:
           username: ${{ secrets.DO_SSH_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           port: ${{ secrets.DO_SSH_PORT || 22 }}
-          script: cd /app && npm ci --omit=dev && pm2 restart no-nikolaus-backend
+          script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            cd /app && npm ci --omit=dev && pm2 restart no-nikolaus-backend
