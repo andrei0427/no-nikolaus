@@ -22,8 +22,11 @@ export function useVesselStream(): UseVesselStreamResult {
   const [error, setError] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const consecutiveFailsRef = useRef(0);
 
   useEffect(() => {
+    const REPORT_AFTER = 5; // only alert after 5 consecutive failures
+
     const connect = () => {
       // Clean up existing connection
       if (eventSourceRef.current) {
@@ -34,6 +37,7 @@ export function useVesselStream(): UseVesselStreamResult {
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
+        consecutiveFailsRef.current = 0;
         setConnected(true);
         setError(null);
       };
@@ -55,11 +59,15 @@ export function useVesselStream(): UseVesselStreamResult {
       };
 
       eventSource.onerror = () => {
-        const states = ['CONNECTING', 'OPEN', 'CLOSED'] as const;
-        reportError('SSE', `Connection error — readyState: ${states[eventSource.readyState] ?? eventSource.readyState}, url: ${eventSource.url}`);
+        consecutiveFailsRef.current += 1;
         setConnected(false);
         setError('Connection lost. Reconnecting...');
         eventSource.close();
+
+        if (consecutiveFailsRef.current === REPORT_AFTER) {
+          const states = ['CONNECTING', 'OPEN', 'CLOSED'] as const;
+          reportError('SSE', `${REPORT_AFTER} consecutive failures — readyState: ${states[eventSource.readyState] ?? eventSource.readyState}, url: ${eventSource.url}`);
+        }
 
         // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = window.setTimeout(() => {
