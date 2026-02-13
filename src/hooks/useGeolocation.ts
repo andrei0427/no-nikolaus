@@ -61,7 +61,6 @@ export function useGeolocation(): GeolocationState & { requestPermission: () => 
         (error) => {
           // Permission denied — no point retrying
           if (error.code === error.PERMISSION_DENIED) {
-            reportError('Geolocation', `Permission denied: ${error.message}`);
             setState({
               latitude: null,
               longitude: null,

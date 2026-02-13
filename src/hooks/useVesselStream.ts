@@ -55,7 +55,8 @@ export function useVesselStream(): UseVesselStreamResult {
       };
 
       eventSource.onerror = () => {
-        reportError('SSE', 'SSE connection error');
+        const states = ['CONNECTING', 'OPEN', 'CLOSED'] as const;
+        reportError('SSE', `Connection error — readyState: ${states[eventSource.readyState] ?? eventSource.readyState}, url: ${eventSource.url}`);
         setConnected(false);
         setError('Connection lost. Reconnecting...');
         eventSource.close();

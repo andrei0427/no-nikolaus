@@ -50,7 +50,7 @@ export function usePushNotifications(): UsePushNotificationsResult {
       const result = await Notification.requestPermission();
       setPermission(result);
 
-      if (result !== 'granted') return;
+      if (result !== 'granted') return; // user denied — not an error
 
       const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
