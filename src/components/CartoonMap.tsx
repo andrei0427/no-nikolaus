@@ -46,9 +46,9 @@ function getRoutePosition(vessel: Vessel): number {
 
 // Two fixed tracks (perpendicular offset from route center):
 const TRACK_NIKOLAUS = 0;       // center
-const TRACK_OTHERS = 18;        // right of center
-const TRACK_OTHERS_SPREAD = 16; // extra spread between overlapping others
-const OVERLAP_THRESHOLD = 15;   // route % within which others spread apart
+const TRACK_OTHERS = 20;        // right of center
+const TRACK_OTHERS_SPREAD = 18; // extra spread between overlapping others
+const OVERLAP_THRESHOLD = 18;   // route % within which others spread apart
 
 // Route endpoints in percentage of container (derived from SVG coords)
 const mgarrPercent = svgToPercent(MGARR_SVG.x, MGARR_SVG.y);
@@ -73,7 +73,7 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
   };
 
   return (
-    <div className="cartoon-card p-4">
+    <div className="cartoon-card p-3 sm:p-4">
       <div
         className="relative bg-gradient-to-br from-sky-300 via-sky-400 to-sky-500 rounded-xl overflow-hidden"
         style={{ aspectRatio: `${VB_W} / ${VB_H}` }}
@@ -210,9 +210,9 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
                   >
                     <div className="flex flex-col items-center">
                       <div style={{ transform: ferryTransform(nik.state) }}>
-                        <FerryIcon name={nik.name} isNikolaus size={70} />
+                        <FerryIcon name={nik.name} isNikolaus size={44} />
                       </div>
-                      <div className="mt-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap bg-red-600 text-white">
+                      <div className="px-1 py-px rounded text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-red-600 text-white leading-tight">
                         {nik.name.replace('MV ', '')}
                       </div>
                     </div>
@@ -232,9 +232,9 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
                   >
                     <div className="flex flex-col items-center">
                       <div style={{ transform: ferryTransform(vessel.state) }}>
-                        <FerryIcon name={vessel.name} size={55} />
+                        <FerryIcon name={vessel.name} size={34} />
                       </div>
-                      <div className="mt-0.5 px-1.5 py-0.5 rounded-full text-xs font-bold shadow-md whitespace-nowrap bg-white bg-opacity-90 text-gray-800">
+                      <div className="px-1 py-px rounded text-[8px] sm:text-[9px] font-bold whitespace-nowrap bg-white bg-opacity-90 text-gray-700 leading-tight">
                         {vessel.name.replace('MV ', '')}
                       </div>
                     </div>
@@ -245,24 +245,24 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
           );
         })()}
 
-        {/* Legend */}
-        <div className="absolute bottom-2 left-2 bg-white bg-opacity-95 rounded-lg p-2 shadow-lg z-20">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5">
-              <FerryIcon name="Nikolaus" isNikolaus size={32} />
-              <span className="text-sm font-bold text-red-800">Nikolaus</span>
+        {/* Legend — compact horizontal on mobile, vertical on desktop */}
+        <div className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 bg-white bg-opacity-90 rounded-md p-1.5 shadow-md z-20">
+          <div className="flex sm:flex-col gap-1.5 sm:gap-1">
+            <div className="flex items-center gap-1">
+              <FerryIcon name="Nikolaus" isNikolaus size={20} />
+              <span className="text-[10px] sm:text-xs font-bold text-red-800 hidden sm:inline">Nikolaus</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FerryIcon name="MV Ta' Pinu" size={32} />
-              <span className="text-sm text-gray-700">Ta' Pinu</span>
+            <div className="flex items-center gap-1">
+              <FerryIcon name="MV Ta' Pinu" size={20} />
+              <span className="text-[10px] sm:text-xs text-gray-700 hidden sm:inline">Ta' Pinu</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FerryIcon name="MV Malita" size={32} />
-              <span className="text-sm text-gray-700">Malita</span>
+            <div className="flex items-center gap-1">
+              <FerryIcon name="MV Malita" size={20} />
+              <span className="text-[10px] sm:text-xs text-gray-700 hidden sm:inline">Malita</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FerryIcon name="MV Gaudos" size={32} />
-              <span className="text-sm text-gray-700">Gaudos</span>
+            <div className="flex items-center gap-1">
+              <FerryIcon name="MV Gaudos" size={20} />
+              <span className="text-[10px] sm:text-xs text-gray-700 hidden sm:inline">Gaudos</span>
             </div>
           </div>
         </div>

@@ -19,6 +19,7 @@ export function handleSSE(req: Request, res: Response): void {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+  res.setHeader('Alt-Svc', 'clear'); // Prevent HTTP/3 (QUIC) — unstable for SSE
 
   // Send initial data immediately
   const initialVessels = getLatestVessels();
