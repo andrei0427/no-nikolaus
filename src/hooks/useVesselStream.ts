@@ -25,8 +25,6 @@ export function useVesselStream(): UseVesselStreamResult {
   const consecutiveFailsRef = useRef(0);
 
   useEffect(() => {
-    const REPORT_AFTER = 5; // only alert after 5 consecutive failures
-
     const connect = () => {
       // Clean up existing connection
       if (eventSourceRef.current) {
