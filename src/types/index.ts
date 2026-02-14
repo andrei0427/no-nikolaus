@@ -38,6 +38,9 @@ export interface TerminalStatus {
   nikolausState: VesselState;
   nikolausEta?: number; // minutes
   driveTime?: number; // minutes
+  safeToCrossNow: boolean;
+  safeMinutes: number | null; // minutes until safety status changes
+  safetyMessage: string;
 }
 
 export interface GeolocationState {

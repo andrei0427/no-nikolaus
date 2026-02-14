@@ -4,6 +4,7 @@ import {
   TERMINALS,
   BUFFER_TIME,
   TURNAROUND_TIME,
+  AVERAGE_CROSSING_TIME,
 } from './constants';
 
 interface PredictionInput {
@@ -47,6 +48,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
       status: 'ALL_CLEAR',
       reason: 'Nikolaus location unknown — likely not in service',
       nikolausState: 'UNKNOWN',
+      safeToCrossNow: true,
+      safeMinutes: null,
+      safetyMessage: 'Nikolaus is not in service',
     };
   }
 
@@ -84,6 +88,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
           reason: 'Nikolaus should leave before you arrive',
           nikolausState,
           driveTime: driveTime ?? undefined,
+          safeToCrossNow: true,
+          safeMinutes: null,
+          safetyMessage: 'Nikolaus should depart before you arrive',
         };
       } else if (userArrivalTime > departureMinutes) {
         // Timing is close
@@ -93,6 +100,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
           reason: 'Nikolaus is docked here — timing uncertain',
           nikolausState,
           driveTime: driveTime ?? undefined,
+          safeToCrossNow: false,
+          safeMinutes: Math.max(0, departureMinutes),
+          safetyMessage: `Nikolaus should leave in ~${Math.round(departureMinutes)} min`,
         };
       }
     }
@@ -104,6 +114,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
       reason: 'Nikolaus is docked here — likely next to depart',
       nikolausState,
       driveTime: driveTime ?? undefined,
+      safeToCrossNow: false,
+      safeMinutes: departureMinutes,
+      safetyMessage: `Nikolaus is here now. Should leave in ~${Math.round(departureMinutes)} min`,
     };
   }
 
@@ -121,7 +134,8 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
       const nikolausReadyToDepart = eta + TURNAROUND_TIME;
 
       if (userArrivalTime < eta) {
-        // User arrives before Nikolaus
+        // User arrives before Nikolaus — safe, with a window
+        const safeWindow = Math.round(eta - (driveTime ?? 0));
         return {
           terminal,
           status: 'ALL_CLEAR',
@@ -129,6 +143,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
           nikolausState,
           nikolausEta: Math.round(eta),
           driveTime: driveTime ?? undefined,
+          safeToCrossNow: true,
+          safeMinutes: Math.max(0, safeWindow),
+          safetyMessage: `Leave within ${safeWindow} min to arrive before Nikolaus`,
         };
       } else if (userArrivalTime > nikolausReadyToDepart + 30) {
         // User arrives well after Nikolaus would have departed
@@ -139,6 +156,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
           nikolausState,
           nikolausEta: Math.round(eta),
           driveTime: driveTime ?? undefined,
+          safeToCrossNow: true,
+          safeMinutes: null,
+          safetyMessage: 'Nikolaus should depart before you arrive',
         };
       } else {
         // Timing is uncertain
@@ -149,6 +169,9 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
           nikolausState,
           nikolausEta: Math.round(eta),
           driveTime: driveTime ?? undefined,
+          safeToCrossNow: false,
+          safeMinutes: Math.round(nikolausReadyToDepart),
+          safetyMessage: `Nikolaus arrives in ~${Math.round(eta)} min, may delay you`,
         };
       }
     }
@@ -161,28 +184,43 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
       nikolausState,
       nikolausEta: eta === Infinity ? undefined : Math.round(eta),
       driveTime: driveTime ?? undefined,
+      safeToCrossNow: false,
+      safeMinutes: eta === Infinity ? null : Math.round(eta + TURNAROUND_TIME),
+      safetyMessage: eta === Infinity
+        ? 'Nikolaus is heading here — timing unknown'
+        : `Nikolaus arrives in ~${Math.round(eta)} min`,
     };
   }
 
   // Case 3: Nikolaus is at the other terminal
   if (isAtOtherTerminal) {
+    // Safe for at least turnaround + crossing time
+    const safeFor = TURNAROUND_TIME + AVERAGE_CROSSING_TIME;
     return {
       terminal,
       status: 'ALL_CLEAR',
-      reason: `Nikolaus is docked at ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
+      reason: `Nikolaus is docked at ${terminal === 'cirkewwa' ? 'Mgarr' : 'Cirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
+      safeToCrossNow: true,
+      safeMinutes: safeFor,
+      safetyMessage: `All clear for ~${safeFor} min`,
     };
   }
 
   // Case 4: Nikolaus is heading away from this terminal
   if (isEnRouteAway) {
+    // Safe for at least crossing + turnaround + crossing
+    const safeFor = AVERAGE_CROSSING_TIME + TURNAROUND_TIME + AVERAGE_CROSSING_TIME;
     return {
       terminal,
       status: 'ALL_CLEAR',
-      reason: `Nikolaus is heading to ${terminal === 'cirkewwa' ? 'Mġarr' : 'Ċirkewwa'}`,
+      reason: `Nikolaus is heading to ${terminal === 'cirkewwa' ? 'Mgarr' : 'Cirkewwa'}`,
       nikolausState,
       driveTime: driveTime ?? undefined,
+      safeToCrossNow: true,
+      safeMinutes: safeFor,
+      safetyMessage: `All clear for ~${safeFor} min`,
     };
   }
 
@@ -193,5 +231,8 @@ export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
     reason: 'Nikolaus location uncertain',
     nikolausState,
     driveTime: driveTime ?? undefined,
+    safeToCrossNow: false,
+    safeMinutes: null,
+    safetyMessage: 'Nikolaus location uncertain — be cautious',
   };
 }

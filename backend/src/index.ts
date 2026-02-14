@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import { initFirebase, getLatestVessels } from './firebase.js';
 import { initSchedule } from './schedule.js';
 import { handleSSE } from './sseHandler.js';
-import { handleSendPush, handlePredictionFeedback } from './pushHandler.js';
+import { handleSendPush, handleTripPush, handlePredictionFeedback } from './pushHandler.js';
 import { sendTelegramAlert } from './telegram.js';
 
 const app = express();
@@ -56,6 +56,7 @@ app.get('/api/vessels', (_req, res) => {
 
 // Push notification endpoints
 app.post('/api/send-prediction-push', pushLimiter, handleSendPush);
+app.post('/api/send-trip-push', pushLimiter, handleTripPush);
 app.post('/api/prediction-feedback', feedbackLimiter, handlePredictionFeedback);
 
 // Frontend error reporting

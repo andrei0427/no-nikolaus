@@ -76,6 +76,58 @@ export async function handleSendPush(req: Request, res: Response) {
   }
 }
 
+export async function handleTripPush(req: Request, res: Response) {
+  const { subscription, terminal, message, safeToCrossNow, safeMinutes } = req.body;
+
+  if (!subscription || !terminal || !message) {
+    res.status(400).json({ error: 'Missing subscription, terminal, or message' });
+    return;
+  }
+
+  if (!isValidSubscription(subscription)) {
+    res.status(400).json({ error: 'Invalid subscription format' });
+    return;
+  }
+
+  if (!VALID_TERMINALS.includes(terminal)) {
+    res.status(400).json({ error: 'Invalid terminal' });
+    return;
+  }
+
+  if (typeof message !== 'string' || message.length > 200) {
+    res.status(400).json({ error: 'Invalid message' });
+    return;
+  }
+
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    res.status(500).json({ error: 'VAPID keys not configured' });
+    return;
+  }
+
+  const payload = JSON.stringify({
+    title: safeToCrossNow ? 'All Clear' : 'Heads Up',
+    body: message,
+    terminal,
+    type: 'trip',
+  });
+
+  try {
+    console.log(`[TripPush] ${terminal} safe=${safeToCrossNow} safeMin=${safeMinutes}`);
+    const result = await webpush.sendNotification(subscription, payload);
+    console.log(`[TripPush] Sent successfully, status: ${result.statusCode}`);
+    res.json({ ok: true });
+  } catch (err: unknown) {
+    const statusCode = (err as { statusCode?: number }).statusCode;
+    if (statusCode === 410 || statusCode === 404) {
+      res.status(410).json({ error: 'Subscription expired' });
+      return;
+    }
+    console.error('Trip push send error:', err);
+    sendTelegramAlert(`Trip push send error: ${err}`);
+    res.status(500).json({ error: 'Failed to send push notification' });
+  }
+}
+
 export async function handlePredictionFeedback(req: Request, res: Response) {
   const { terminal, ferryName, correct } = req.body;
 

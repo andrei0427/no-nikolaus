@@ -47,6 +47,7 @@ function getRoutePosition(vessel: Vessel): number {
 // Two fixed tracks (perpendicular offset from route center):
 const TRACK_NIKOLAUS = 0;       // center
 const TRACK_OTHERS = 20;        // right of center
+const TRACK_OTHERS_DOCKED = 8;  // slight perp offset when docked (stay near coast)
 const TRACK_OTHERS_SPREAD = 18; // extra spread between overlapping others
 const OVERLAP_THRESHOLD = 18;   // route % within which others spread apart
 
@@ -60,14 +61,23 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
   const cirkewwaX = cirkewwaPercent.x;
   const cirkewwaY = cirkewwaPercent.y;
 
-  const getPositionOnRoute = (progress: number, laneOffset: number = 0) => {
+  const routeAngle = Math.atan2(cirkewwaY - mgarrY, cirkewwaX - mgarrX);
+  const perpAngle = routeAngle + Math.PI / 2;
+
+  const getPositionOnRoute = (
+    progress: number,
+    laneOffset: number = 0,
+    parallelOffset: number = 0,
+  ) => {
     const x = mgarrX + (cirkewwaX - mgarrX) * (progress / 100);
     const y = mgarrY + (cirkewwaY - mgarrY) * (progress / 100);
 
-    const angle = Math.atan2(cirkewwaY - mgarrY, cirkewwaX - mgarrX);
-    const perpAngle = angle + Math.PI / 2;
-    const offsetX = Math.cos(perpAngle) * laneOffset * 0.5;
-    const offsetY = Math.sin(perpAngle) * laneOffset * 0.5;
+    const offsetX =
+      Math.cos(perpAngle) * laneOffset * 0.5 +
+      Math.cos(routeAngle) * parallelOffset * 0.5;
+    const offsetY =
+      Math.sin(perpAngle) * laneOffset * 0.5 +
+      Math.sin(routeAngle) * parallelOffset * 0.5;
 
     return { x: x + offsetX, y: y + offsetY };
   };
@@ -183,16 +193,32 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
           const nik = vessels.find((v) => v.isNikolaus);
           const others = vessels.filter((v) => !v.isNikolaus);
 
-          // Compute extra spread for "others" when they overlap each other
+          // Compute spread for "others" — docked ferries spread along the
+          // route (parallel) so they stay on the coast, en-route ferries
+          // spread perpendicular so they don't overlap.
           const othersWithProgress = others.map((v) => ({
             vessel: v,
             progress: getRoutePosition(v),
+            docked: v.state === 'DOCKED_MGARR' || v.state === 'DOCKED_CIRKEWWA',
           })).sort((a, b) => a.progress - b.progress);
 
-          const othersExtraOffset: number[] = new Array(othersWithProgress.length).fill(0);
-          for (let i = 1; i < othersWithProgress.length; i++) {
-            if (othersWithProgress[i].progress - othersWithProgress[i - 1].progress < OVERLAP_THRESHOLD) {
-              othersExtraOffset[i] = othersExtraOffset[i - 1] + TRACK_OTHERS_SPREAD;
+          const othersExtraPerp: number[] = new Array(othersWithProgress.length).fill(0);
+          const othersParallel: number[] = new Array(othersWithProgress.length).fill(0);
+
+          // Give the first docked ferry a parallel offset so it doesn't sit
+          // on top of Nikolaus, then keep spreading subsequent ones.
+          let dockedCount = 0;
+          for (let i = 0; i < othersWithProgress.length; i++) {
+            const { docked, progress } = othersWithProgress[i];
+            const overlaps = i > 0 &&
+              progress - othersWithProgress[i - 1].progress < OVERLAP_THRESHOLD;
+
+            if (docked && (i === 0 || overlaps)) {
+              const dir = progress === 0 ? 1 : -1;
+              othersParallel[i] = dockedCount * TRACK_OTHERS_SPREAD * dir;
+              dockedCount++;
+            } else if (!docked && overlaps) {
+              othersExtraPerp[i] = othersExtraPerp[i - 1] + TRACK_OTHERS_SPREAD;
             }
           }
 
@@ -221,9 +247,13 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
               })()}
 
               {/* Other ferries — right track, spreading further right if overlapping */}
-              {othersWithProgress.map(({ vessel, progress }, i) => {
-                const offset = TRACK_OTHERS + othersExtraOffset[i];
-                const pos = getPositionOnRoute(progress, offset);
+              {othersWithProgress.map(({ vessel, progress, docked }, i) => {
+                // Flip perp direction per terminal: at Mgarr push into Gozo
+                // (negative = up-right), at Cirkewwa push into Malta (positive = down-left)
+                const dockedPerp = progress === 0 ? -TRACK_OTHERS_DOCKED : TRACK_OTHERS_DOCKED;
+                const perpOffset = docked ? dockedPerp : TRACK_OTHERS + othersExtraPerp[i];
+                const parOffset = othersParallel[i];
+                const pos = getPositionOnRoute(progress, perpOffset, parOffset);
                 return (
                   <div
                     key={vessel.MMSI}

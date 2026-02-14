@@ -31,7 +31,8 @@ interface PushPayload {
   title: string;
   body: string;
   terminal: string;
-  ferryName: string;
+  type?: 'trip' | 'prediction';
+  ferryName?: string;
 }
 
 // Push notification handler
@@ -44,26 +45,30 @@ self.addEventListener('push', (event) => {
     body: data.body,
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: `prediction-${data.terminal}`,
+    tag: data.type === 'trip' ? `trip-${data.terminal}` : `prediction-${data.terminal}`,
     renotify: true,
-    data: { terminal: data.terminal, ferryName: data.ferryName },
-    actions: [
-      { action: 'yes', title: 'Yes ✅' },
-      { action: 'no', title: 'No ❌' },
-    ],
+    data: { terminal: data.terminal, type: data.type || 'prediction', ferryName: data.ferryName },
   };
+
+  // Only add feedback actions for prediction-type notifications
+  if (data.type !== 'trip' && data.ferryName) {
+    options.actions = [
+      { action: 'yes', title: 'Yes' },
+      { action: 'no', title: 'No' },
+    ];
+  }
 
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  const { terminal, ferryName } = event.notification.data;
+  const { terminal, ferryName, type } = event.notification.data;
 
   event.notification.close();
 
-  if (event.action === 'yes' || event.action === 'no') {
-    // User tapped an action button — send feedback
+  if (type !== 'trip' && (event.action === 'yes' || event.action === 'no')) {
+    // User tapped a feedback action button
     event.waitUntil(
       fetch(`${__API_URL__}/api/prediction-feedback`, {
         method: 'POST',
@@ -76,7 +81,7 @@ self.addEventListener('notificationclick', (event) => {
       }).catch((err) => console.error('Feedback POST failed:', err))
     );
   } else {
-    // Body tap — open the app
+    // Body tap or trip notification — open the app
     event.waitUntil(
       self.clients.matchAll({ type: 'window' }).then((clientList) => {
         for (const client of clientList) {

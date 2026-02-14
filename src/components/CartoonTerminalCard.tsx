@@ -12,6 +12,7 @@ interface FerryPrediction {
 
 interface CartoonTerminalCardProps {
   terminal: Terminal;
+  mode: 'live' | 'trip';
   status: TerminalStatus | null;
   driveTime: number | null;
   driveTimeLoading: boolean;
@@ -23,12 +24,13 @@ interface CartoonTerminalCardProps {
 }
 
 const terminalInfo: Record<Terminal, { name: string; island: string; lat: number; lon: number }> = {
-  cirkewwa: { name: 'Ċirkewwa', island: 'Malta', lat: 35.989, lon: 14.329 },
-  mgarr: { name: 'Mġarr', island: 'Gozo', lat: 36.025, lon: 14.299 },
+  cirkewwa: { name: 'Cirkewwa', island: 'Malta', lat: 35.989, lon: 14.329 },
+  mgarr: { name: 'Mgarr', island: 'Gozo', lat: 36.025, lon: 14.299 },
 };
 
 export function CartoonTerminalCard({
   terminal,
+  mode,
   status,
   driveTime,
   driveTimeLoading,
@@ -48,7 +50,7 @@ export function CartoonTerminalCard({
   return (
     <div
       className={`cartoon-card p-4 transition-all duration-300 ${
-        isSelected
+        isSelected && mode === 'trip'
           ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-sky-300 scale-[1.02]'
           : ''
       }`}
@@ -56,13 +58,13 @@ export function CartoonTerminalCard({
       {/* Header: terminal name + drive time on same line */}
       <div className="flex items-baseline justify-between gap-2 mb-3">
         <div className="flex items-baseline gap-1.5">
-          {isSelected && <span className="text-yellow-500 text-lg" title="Your departure terminal">★</span>}
+          {isSelected && mode === 'trip' && <span className="text-yellow-500 text-lg" title="Your departure terminal">★</span>}
           <h2 className="text-xl font-bold text-amber-900 font-[Fredoka]">
             {info.name}
           </h2>
           <span className="text-amber-600 text-sm">({info.island})</span>
         </div>
-        {isSelected && (
+        {mode === 'trip' && isSelected && (
           <div className="text-right shrink-0">
             {driveTimeLoading ? (
               <span className="text-sm text-amber-600 animate-pulse">...</span>
@@ -74,7 +76,7 @@ export function CartoonTerminalCard({
                 className="text-amber-800 hover:text-amber-600 font-bold text-sm transition-colors"
                 title="Open in Google Maps"
               >
-                ~{driveTime}m 🗺️
+                ~{driveTime}m
               </a>
             ) : locationAvailable ? (
               <span className="text-xs text-amber-500">—</span>
@@ -83,19 +85,30 @@ export function CartoonTerminalCard({
         )}
       </div>
 
-      {/* Status badge */}
-      <div className="mb-3">
-        {status ? (
-          <CartoonStatusBadge status={status.status} reason={status.reason} />
-        ) : (
-          <div className="text-center text-base text-amber-600 animate-pulse">
-            Loading...
-          </div>
-        )}
-      </div>
+      {/* Status badge — trip mode only */}
+      {mode === 'trip' && (
+        <div className="mb-3">
+          {status ? (
+            <CartoonStatusBadge status={status.status} reason={status.reason} />
+          ) : (
+            <div className="text-center text-base text-amber-600 animate-pulse">
+              Loading...
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Ferry prediction — compact single line */}
-      {ferryPrediction?.ferry && (
+      {/* Safety countdown — trip mode only */}
+      {mode === 'trip' && status && status.status !== 'ALL_CLEAR' && (
+        <div className="flex items-center gap-2 bg-amber-50 bg-opacity-80 rounded-lg px-3 py-2 border border-amber-300 mb-2">
+          <span className="text-sm text-amber-800 font-medium">
+            {status.safetyMessage}
+          </span>
+        </div>
+      )}
+
+      {/* Ferry prediction — trip mode only */}
+      {mode === 'trip' && ferryPrediction?.ferry && (
         <div className="flex items-center justify-between bg-white bg-opacity-60 rounded-lg px-3 py-2 border border-amber-200 mb-2">
           <span className="text-sm text-amber-700">
             Next: <strong className="text-amber-900">{ferryPrediction.ferry.name.replace('MV ', '')}</strong>
@@ -107,15 +120,15 @@ export function CartoonTerminalCard({
         </div>
       )}
 
-      {/* Next departure when no ferry prediction */}
-      {!ferryPrediction?.ferry && nextDeparture && (
+      {/* Next departure — shown in both modes when no ferry prediction */}
+      {(mode === 'live' || !ferryPrediction?.ferry) && nextDeparture && (
         <div className="flex items-center justify-between bg-white bg-opacity-60 rounded-lg px-3 py-2 border border-amber-200 mb-2">
           <span className="text-sm text-amber-700">Next departure:</span>
           <span className="text-sm font-bold text-amber-900">{nextDeparture}</span>
         </div>
       )}
 
-      {/* Queue — compact single line */}
+      {/* Queue — shown in both modes */}
       {queueData && queueEstimate && (
         <div className={`rounded-lg px-3 py-2 border ${
           queueEstimate.severity === 'high'
