@@ -77,6 +77,22 @@ h1, h2, h3, h4, h5, h6 {
     inset 0 -4px 0 rgba(0,0,0,0.1);
 }
 
+/* Ferry icon responsive sizing — render large, scale down on mobile */
+.ferry-icon-nikolaus {
+  transform-origin: center center;
+}
+.ferry-icon-other {
+  transform-origin: center center;
+}
+@media (max-width: 639px) {
+  .ferry-icon-nikolaus {
+    scale: 0.55;
+  }
+  .ferry-icon-other {
+    scale: 0.5;
+  }
+}
+
 /* Status badge styles */
 .status-safe {
   background: linear-gradient(135deg, #A5D6A7 0%, var(--safe-green) 100%);

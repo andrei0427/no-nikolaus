@@ -234,9 +234,9 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out z-10"
                     style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                   >
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center ferry-icon-nikolaus">
                       <div style={{ transform: ferryTransform(nik.state) }}>
-                        <FerryIcon name={nik.name} isNikolaus size={44} />
+                        <FerryIcon name={nik.name} isNikolaus size={80} />
                       </div>
                       <div className="px-1 py-px rounded text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-red-600 text-white leading-tight">
                         {nik.name.replace('MV ', '')}
@@ -260,9 +260,9 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out z-10"
                     style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                   >
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center ferry-icon-other">
                       <div style={{ transform: ferryTransform(vessel.state) }}>
-                        <FerryIcon name={vessel.name} size={34} />
+                        <FerryIcon name={vessel.name} size={64} />
                       </div>
                       <div className="px-1 py-px rounded text-[8px] sm:text-[9px] font-bold whitespace-nowrap bg-white bg-opacity-90 text-gray-700 leading-tight">
                         {vessel.name.replace('MV ', '')}
