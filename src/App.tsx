@@ -12,7 +12,7 @@ import { useVesselStream } from './hooks/useVesselStream';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useDriveTime } from './hooks/useDriveTime';
 import { predictTerminalStatus } from './utils/prediction';
-import { predictLikelyFerry, getNextDeparture } from './utils/ferryPrediction';
+import { predictLikelyFerry } from './utils/ferryPrediction';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { useTripNotification } from './hooks/useTripNotification';
 
@@ -58,23 +58,13 @@ function App() {
   );
 
   const cirkewwaFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa, schedule, portVehicleData.cirkewwa),
-    [vessels, driveTime.cirkewwa, schedule, portVehicleData.cirkewwa]
+    () => predictLikelyFerry(vessels, 'cirkewwa', driveTime.cirkewwa, null, portVehicleData.cirkewwa),
+    [vessels, driveTime.cirkewwa, portVehicleData.cirkewwa]
   );
 
   const mgarrFerryPrediction = useMemo(
-    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr, schedule, portVehicleData.mgarr),
-    [vessels, driveTime.mgarr, schedule, portVehicleData.mgarr]
-  );
-
-  const cirkewwaNextDeparture = useMemo(
-    () => getNextDeparture('cirkewwa', schedule, driveTime.cirkewwa, cirkewwaFerryPrediction.departureTime),
-    [schedule, driveTime.cirkewwa, cirkewwaFerryPrediction.departureTime]
-  );
-
-  const mgarrNextDeparture = useMemo(
-    () => getNextDeparture('mgarr', schedule, driveTime.mgarr, mgarrFerryPrediction.departureTime),
-    [schedule, driveTime.mgarr, mgarrFerryPrediction.departureTime]
+    () => predictLikelyFerry(vessels, 'mgarr', driveTime.mgarr, null, portVehicleData.mgarr),
+    [vessels, driveTime.mgarr, portVehicleData.mgarr]
   );
 
   // Auto-select terminal based on which one user is closer to (if they have location)
@@ -175,7 +165,6 @@ function App() {
               locationAvailable={hasLocation}
               ferryPrediction={cirkewwaFerryPrediction}
               queueData={portVehicleData.cirkewwa ?? undefined}
-              nextDeparture={cirkewwaNextDeparture}
               isSelected={autoSelectedTerminal === 'cirkewwa'}
             />
           )}
@@ -189,7 +178,6 @@ function App() {
               locationAvailable={hasLocation}
               ferryPrediction={mgarrFerryPrediction}
               queueData={portVehicleData.mgarr ?? undefined}
-              nextDeparture={mgarrNextDeparture}
               isSelected={autoSelectedTerminal === 'mgarr'}
             />
           )}

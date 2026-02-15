@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from 'react';
-import { reportError } from '../utils/reportError';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -40,7 +39,7 @@ export function usePushNotifications(): UsePushNotificationsResult {
       .then((sub) => {
         if (sub) setSubscription(sub);
       })
-      .catch((err) => reportError('Push subscription', err));
+      .catch(() => {});
   }, [supported]);
 
   const requestPermission = useCallback(async () => {
@@ -65,8 +64,8 @@ export function usePushNotifications(): UsePushNotificationsResult {
       });
 
       setSubscription(sub);
-    } catch (err) {
-      reportError('Push subscription', err);
+    } catch {
+      // Push subscription failure is a browser/permission issue, not a service error
     }
   }, [supported]);
 

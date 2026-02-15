@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { reportError } from '../utils/reportError';
 import { API_URL } from '../utils/apiUrl';
 import type { Terminal, TerminalStatus } from '../types';
 
@@ -65,8 +64,7 @@ export function useTripNotification({
           sentRef.current = false;
         }
       })
-      .catch((err) => {
-        reportError('Trip push', err);
+      .catch(() => {
         sentRef.current = false;
       });
   }, [tripActive, subscription, terminal, status]);

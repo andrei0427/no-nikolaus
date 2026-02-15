@@ -1,4 +1,4 @@
-import { Vessel, Terminal, VesselState, FerrySchedule, PortVehicleDetections } from '../types';
+import { Vessel, Terminal, VesselState, PortVehicleDetections } from '../types';
 import { distanceToTerminal, estimateArrivalTime } from './coordinates';
 import {
   TERMINALS,
@@ -14,6 +14,7 @@ export interface FerryPrediction {
   ferry: Vessel | null;
   confidence: 'high' | 'medium' | 'low';
   reason: string;
+  /** Estimated departure time as "HH:MM", derived from vessel readiness */
   departureTime: string | null;
 }
 
@@ -23,25 +24,25 @@ interface NikolausPositionPrediction {
   state: VesselState;
 }
 
-/** Parse "HH:MM" to minutes-of-day */
-function parseTime(t: string): number {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
+/** Convert minutes-of-day to "HH:MM" */
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60) % 24;
+  const min = Math.round(m % 60);
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
 /**
  * Predict which ferry will likely serve the user upon arrival at a terminal.
  *
- * Algorithm:
- * 1. Compute vessel readiness (when each vessel can depart from this terminal)
- * 2. Build departure timeline by assigning vessels to scheduled departure slots
- * 3. Drain the queue through departures until the user's ferry is found
+ * Pure position-based: computes when each vessel can be ready at the terminal,
+ * then picks the first one the user will board (accounting for drive time and
+ * optional queue drain).
  */
 export function predictLikelyFerry(
   vessels: Vessel[],
   terminal: Terminal,
   driveTime: number | null,
-  schedule: FerrySchedule | null,
+  _schedule: unknown,
   queueData?: PortVehicleDetections | null
 ): FerryPrediction {
   if (vessels.length === 0) {
@@ -56,7 +57,7 @@ export function predictLikelyFerry(
     ? nowMinutes + driveTime + BUFFER_TIME
     : nowMinutes;
 
-  // --- Step A: Vessel readiness ---
+  // --- Vessel readiness ---
   const readyList: { vessel: Vessel; readyMinutes: number; detail: string }[] = [];
 
   for (const vessel of vessels) {
@@ -103,126 +104,64 @@ export function predictLikelyFerry(
     return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
   }
 
-  // --- Step B: Build departure timeline ---
-  const scheduledTimes = schedule
-    ? (terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr)?.map(t => ({ time: t, minutes: parseTime(t) })) ?? []
-    : [];
-
-  const futureDeps = scheduledTimes.filter(d => d.minutes >= nowMinutes);
-
-  interface Departure {
-    vessel: Vessel;
-    depMinutes: number;
-    depTime: string | null;
-    capacity: number;
-    detail: string;
-  }
-
-  const departures: Departure[] = [];
-  const assignedVessels = new Set<number>(); // track by MMSI
-
-  if (futureDeps.length > 0) {
-    // Assign vessels to scheduled departure slots
-    for (const dep of futureDeps) {
-      // Find earliest-ready unassigned vessel that's ready by this departure
-      const candidate = readyList.find(
-        r => !assignedVessels.has(r.vessel.MMSI) && r.readyMinutes <= dep.minutes
-      );
-      if (candidate) {
-        assignedVessels.add(candidate.vessel.MMSI);
-        departures.push({
-          vessel: candidate.vessel,
-          depMinutes: dep.minutes,
-          depTime: dep.time,
-          capacity: FERRY_CAPACITIES[candidate.vessel.name] ?? 100,
-          detail: candidate.detail,
-        });
-      }
-    }
-  }
-
-  // If no schedule or no departures could be assigned, use readyList directly
-  if (departures.length === 0) {
-    for (const r of readyList) {
-      departures.push({
-        vessel: r.vessel,
-        depMinutes: r.readyMinutes,
-        depTime: null,
-        capacity: FERRY_CAPACITIES[r.vessel.name] ?? 100,
-        detail: r.detail,
-      });
-    }
-  }
-
-  // --- Step C: Queue drain ---
+  // --- Queue drain ---
   if (queueData) {
-    const remainingQueueInit =
+    const totalQueue =
       queueData.car +
       queueData.truck * TRUCK_CAR_EQUIVALENT +
       queueData.motorbike * MOTORBIKE_CAR_EQUIVALENT;
 
-    let remainingQueue = remainingQueueInit;
+    let remaining = totalQueue;
 
-    for (const dep of departures) {
-      remainingQueue -= dep.capacity;
-      if (remainingQueue <= 0 && dep.depMinutes >= userArrivalMinutes) {
-        const confidence = dep.detail === 'docked' ? 'high' : 'medium';
-        const queueNote = remainingQueueInit > dep.capacity ? ' (queue clears)' : '';
-        const reason = dep.depTime
-          ? `${dep.vessel.name} departs at ${dep.depTime}${queueNote}`
-          : `${dep.vessel.name} is currently docked${queueNote}`;
-        return { ferry: dep.vessel, confidence, reason, departureTime: dep.depTime };
+    for (const r of readyList) {
+      const capacity = FERRY_CAPACITIES[r.vessel.name] ?? 100;
+      remaining -= capacity;
+      // Pick first vessel that departs after user arrives and clears the queue
+      if (remaining <= 0 && r.readyMinutes >= userArrivalMinutes) {
+        const confidence = r.detail === 'docked' ? 'high' : 'medium';
+        const queueNote = totalQueue > capacity ? ' (queue clears)' : '';
+        return {
+          ferry: r.vessel,
+          confidence,
+          reason: `${r.vessel.name} — ${r.detail}${queueNote}`,
+          departureTime: minutesToTime(r.readyMinutes),
+        };
       }
+      // Vessel departs before user arrives — still drains queue
+      if (remaining <= 0) remaining = 0;
     }
 
-    // Queue never drains or no departure after user arrival
-    if (departures.length > 0) {
-      const last = departures[departures.length - 1];
-      return {
-        ferry: last.vessel,
-        confidence: 'low',
-        reason: 'Heavy queue — expect significant delays',
-        departureTime: last.depTime,
-      };
-    }
-
-    return { ferry: null, confidence: 'low', reason: 'No ferry data available', departureTime: null };
+    // Queue never drains
+    const last = readyList[readyList.length - 1];
+    return {
+      ferry: last.vessel,
+      confidence: 'low',
+      reason: 'Heavy queue — expect delays',
+      departureTime: minutesToTime(last.readyMinutes),
+    };
   }
 
-  // --- No queue data ---
-  // With schedule: find first scheduled departure >= user arrival
-  // Without schedule: find first vessel ready by user arrival (readyMinutes <= userArrival)
-  for (const dep of departures) {
-    const isAvailable = dep.depTime
-      ? dep.depMinutes >= userArrivalMinutes  // scheduled: departs after user arrives
-      : dep.depMinutes <= userArrivalMinutes; // no schedule: ready by user arrival
-    if (isAvailable) {
-      const confidence = dep.detail === 'docked'
-        ? (dep.depTime ? 'high' : 'medium')
-        : 'medium';
-      const reason = dep.depTime
-        ? dep.detail === 'docked'
-          ? `${dep.vessel.name} departs at ${dep.depTime}`
-          : `${dep.vessel.name} ${dep.detail}, departs at ${dep.depTime}`
-        : dep.detail === 'docked'
-          ? `${dep.vessel.name} is currently docked`
-          : `${dep.vessel.name} ${dep.detail}`;
-      return { ferry: dep.vessel, confidence, reason, departureTime: dep.depTime };
-    }
+  // --- No queue data: first vessel ready when user arrives ---
+  // Prefer a vessel already ready (docked) over one arriving later
+  const readyOnArrival = readyList.find(r => r.readyMinutes <= userArrivalMinutes);
+  if (readyOnArrival) {
+    return {
+      ferry: readyOnArrival.vessel,
+      confidence: readyOnArrival.detail === 'docked' ? 'high' : 'medium',
+      reason: readyOnArrival.detail === 'docked'
+        ? `${readyOnArrival.vessel.name} — docked & waiting`
+        : `${readyOnArrival.vessel.name} — ${readyOnArrival.detail}`,
+      departureTime: null, // already waiting, no ETA needed
+    };
   }
 
-  // No departures after user arrival (with schedule) or no vessel ready (without)
-  if (futureDeps.length > 0) {
-    return { ferry: null, confidence: 'low', reason: 'No more departures today', departureTime: null };
-  }
-
-  // Fallback: return first available vessel
-  const best = readyList[0];
+  // No vessel ready yet — pick the first one that will be
+  const next = readyList[0];
   return {
-    ferry: best.vessel,
-    confidence: 'low',
-    reason: `${best.vessel.name} ${best.detail}`,
-    departureTime: null,
+    ferry: next.vessel,
+    confidence: 'medium',
+    reason: `${next.vessel.name} — ${next.detail}`,
+    departureTime: minutesToTime(next.readyMinutes),
   };
 }
 
@@ -317,40 +256,3 @@ export function predictNikolausPosition(
   return null;
 }
 
-/**
- * Find the next scheduled departure from a terminal at or after a given time.
- * If `afterTime` is provided (e.g. from a prediction), returns the departure AFTER that one.
- * Returns the departure time string (e.g. "14:30") or null.
- */
-export function getNextDeparture(
-  terminal: Terminal,
-  schedule: FerrySchedule | null,
-  driveTimeMinutes: number | null,
-  afterTime?: string | null
-): string | null {
-  if (!schedule) return null;
-
-  const times = terminal === 'cirkewwa' ? schedule.cirkewwa : schedule.mgarr;
-  if (!times || times.length === 0) return null;
-
-  // Calculate the time the user arrives at the terminal
-  const now = new Date();
-  const arrivalMs = now.getTime() + (driveTimeMinutes ?? 0) * 60_000 + BUFFER_TIME * 60_000;
-  const arrival = new Date(arrivalMs);
-  const arrivalMinutes = arrival.getHours() * 60 + arrival.getMinutes();
-
-  // If we have a predicted departure, find the one strictly after it
-  const skipMinutes = afterTime ? parseTime(afterTime) : null;
-
-  for (const time of times) {
-    const depMinutes = parseTime(time);
-    if (depMinutes >= arrivalMinutes) {
-      // If skipping past a predicted departure, find the next one after it
-      if (skipMinutes !== null && depMinutes <= skipMinutes) continue;
-      return time;
-    }
-  }
-
-  // No more departures today
-  return null;
-}

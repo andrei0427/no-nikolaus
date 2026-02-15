@@ -19,7 +19,6 @@ interface CartoonTerminalCardProps {
   locationAvailable: boolean;
   ferryPrediction?: FerryPrediction;
   queueData?: PortVehicleDetections;
-  nextDeparture?: string | null;
   isSelected?: boolean;
 }
 
@@ -37,7 +36,6 @@ export function CartoonTerminalCard({
   locationAvailable,
   ferryPrediction,
   queueData,
-  nextDeparture,
   isSelected,
 }: CartoonTerminalCardProps) {
   const info = terminalInfo[terminal];
@@ -111,20 +109,12 @@ export function CartoonTerminalCard({
       {mode === 'trip' && ferryPrediction?.ferry && (
         <div className="flex items-center justify-between bg-white bg-opacity-60 rounded-lg px-3 py-2 border border-amber-200 mb-2">
           <span className="text-sm text-amber-700">
-            Next: <strong className="text-amber-900">{ferryPrediction.ferry.name.replace('MV ', '')}</strong>
+            Your ferry: <strong className="text-amber-900">{ferryPrediction.ferry.name.replace('MV ', '')}</strong>
             {ferryPrediction.ferry.isNikolaus && <span className="text-red-600 font-bold"> (!)</span>}
           </span>
-          {nextDeparture && (
-            <span className="text-sm font-semibold text-amber-800">{nextDeparture}</span>
+          {ferryPrediction.departureTime && (
+            <span className="text-sm font-semibold text-amber-800">~{ferryPrediction.departureTime}</span>
           )}
-        </div>
-      )}
-
-      {/* Next departure — shown in both modes when no ferry prediction */}
-      {(mode === 'live' || !ferryPrediction?.ferry) && nextDeparture && (
-        <div className="flex items-center justify-between bg-white bg-opacity-60 rounded-lg px-3 py-2 border border-amber-200 mb-2">
-          <span className="text-sm text-amber-700">Next departure:</span>
-          <span className="text-sm font-bold text-amber-900">{nextDeparture}</span>
         </div>
       )}
 
