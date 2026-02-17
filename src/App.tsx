@@ -67,6 +67,33 @@ function App() {
     [vessels, driveTime.mgarr, portVehicleData.mgarr]
   );
 
+  // Override terminal status when the user's predicted ferry IS Nikolaus
+  const cirkewwaEffectiveStatus = useMemo(() => {
+    if (cirkewwaFerryPrediction.ferry?.isNikolaus && cirkewwaStatus) {
+      return {
+        ...cirkewwaStatus,
+        status: 'HEADS_UP' as const,
+        safeToCrossNow: false,
+        reason: 'Your predicted ferry is Nikolaus',
+        safetyMessage: 'You may end up boarding Nikolaus',
+      };
+    }
+    return cirkewwaStatus;
+  }, [cirkewwaStatus, cirkewwaFerryPrediction]);
+
+  const mgarrEffectiveStatus = useMemo(() => {
+    if (mgarrFerryPrediction.ferry?.isNikolaus && mgarrStatus) {
+      return {
+        ...mgarrStatus,
+        status: 'HEADS_UP' as const,
+        safeToCrossNow: false,
+        reason: 'Your predicted ferry is Nikolaus',
+        safetyMessage: 'You may end up boarding Nikolaus',
+      };
+    }
+    return mgarrStatus;
+  }, [mgarrStatus, mgarrFerryPrediction]);
+
   // Auto-select terminal based on which one user is closer to (if they have location)
   const autoSelectedTerminal = useMemo(() => {
     if (!hasLocation) return null;
@@ -99,8 +126,8 @@ function App() {
   // Get the status for the selected terminal (for trip notification)
   const selectedStatus = useMemo(() => {
     if (!autoSelectedTerminal) return null;
-    return autoSelectedTerminal === 'cirkewwa' ? cirkewwaStatus : mgarrStatus;
-  }, [autoSelectedTerminal, cirkewwaStatus, mgarrStatus]);
+    return autoSelectedTerminal === 'cirkewwa' ? cirkewwaEffectiveStatus : mgarrEffectiveStatus;
+  }, [autoSelectedTerminal, cirkewwaEffectiveStatus, mgarrEffectiveStatus]);
 
   // Trip notification — fires once when trip starts
   useTripNotification({
@@ -159,7 +186,7 @@ function App() {
             <CartoonTerminalCard
               terminal="cirkewwa"
               mode={isTrip ? 'trip' : 'live'}
-              status={cirkewwaStatus}
+              status={cirkewwaEffectiveStatus}
               driveTime={driveTime.cirkewwa}
               driveTimeLoading={driveTime.loading}
               locationAvailable={hasLocation}
@@ -172,7 +199,7 @@ function App() {
             <CartoonTerminalCard
               terminal="mgarr"
               mode={isTrip ? 'trip' : 'live'}
-              status={mgarrStatus}
+              status={mgarrEffectiveStatus}
               driveTime={driveTime.mgarr}
               driveTimeLoading={driveTime.loading}
               locationAvailable={hasLocation}
