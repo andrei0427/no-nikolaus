@@ -2,6 +2,7 @@ import { Vessel, VesselState } from '../types';
 
 interface NikolausStatusStripProps {
   nikolaus: Vessel | null;
+  hasData: boolean;
 }
 
 function getStatusText(state: VesselState): string {
@@ -32,14 +33,16 @@ function getDotColor(state: VesselState): string {
   }
 }
 
-export function NikolausStatusStrip({ nikolaus }: NikolausStatusStripProps) {
-  if (!nikolaus) {
+export function NikolausStatusStrip({ nikolaus, hasData }: NikolausStatusStripProps) {
+  const notInService = !nikolaus || nikolaus.state === 'UNKNOWN';
+
+  if (notInService) {
     return (
       <div className="bg-white bg-opacity-60 border-b-2 border-amber-200">
         <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-center gap-2.5">
-          <div className="w-3 h-3 rounded-full bg-gray-400" />
+          <div className={`w-3 h-3 rounded-full ${hasData ? 'bg-green-500' : 'bg-gray-400 animate-pulse'}`} />
           <span className="font-bold text-amber-800 text-base" style={{ fontFamily: 'Fredoka, sans-serif' }}>
-            Waiting for Nikolaus data...
+            {hasData ? 'Nikolaus is not in service — all clear!' : 'Connecting...'}
           </span>
         </div>
       </div>

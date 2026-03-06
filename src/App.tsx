@@ -145,7 +145,7 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <CartoonHeader connected={connected} lastUpdate={lastUpdate} />
 
-      <NikolausStatusStrip nikolaus={nikolaus} />
+      <NikolausStatusStrip nikolaus={nikolaus} hasData={vessels.length > 0} />
 
       {/* Trip banner — shown when trip is active and we have location */}
       {isTrip && autoSelectedTerminal && (

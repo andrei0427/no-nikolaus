@@ -41,8 +41,8 @@ function estimateDepartureMinutes(terminal: Terminal, schedule?: FerrySchedule |
 export function predictTerminalStatus(input: PredictionInput): TerminalStatus {
   const { nikolaus, terminal, driveTime, schedule } = input;
 
-  // If we can't find Nikolaus, assume all clear (might be in maintenance)
-  if (!nikolaus) {
+  // If Nikolaus is absent or state is unknown, assume not in service
+  if (!nikolaus || nikolaus.state === 'UNKNOWN') {
     return {
       terminal,
       status: 'ALL_CLEAR',
