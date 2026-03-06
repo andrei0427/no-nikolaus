@@ -228,17 +228,18 @@ export function CartoonMap({ vessels }: CartoonMapProps) {
               {nik && (() => {
                 const progress = getRoutePosition(nik);
                 const pos = getPositionOnRoute(progress, TRACK_NIKOLAUS);
+                const outOfService = nik.state === 'UNKNOWN';
                 return (
                   <div
                     key={nik.MMSI}
                     className="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-1000 ease-in-out z-10"
-                    style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+                    style={{ left: `${pos.x}%`, top: `${pos.y}%`, opacity: outOfService ? 0.4 : 1, filter: outOfService ? 'grayscale(1)' : 'none' }}
                   >
                     <div className="flex flex-col items-center ferry-icon-nikolaus">
                       <div style={{ transform: ferryTransform(nik.state) }}>
                         <FerryIcon name={nik.name} isNikolaus size={80} />
                       </div>
-                      <div className="px-1 py-px rounded text-[9px] sm:text-[10px] font-bold whitespace-nowrap bg-red-600 text-white leading-tight">
+                      <div className={`px-1 py-px rounded text-[9px] sm:text-[10px] font-bold whitespace-nowrap leading-tight ${outOfService ? 'bg-gray-400 text-white' : 'bg-red-600 text-white'}`}>
                         {nik.name.replace('MV ', '')}
                       </div>
                     </div>
