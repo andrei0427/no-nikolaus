@@ -1,0 +1,556 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AABB000000000000000100 /* NoNikolausWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000050 /* NoNikolausWatchApp.swift */; };
+		AABB000000000000000101 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000051 /* ContentView.swift */; };
+		AABB000000000000000102 /* TerminalDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000052 /* TerminalDetailView.swift */; };
+		AABB000000000000000103 /* WebcamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000053 /* WebcamView.swift */; };
+		AABB000000000000000104 /* WebcamImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000054 /* WebcamImageView.swift */; };
+		AABB000000000000000105 /* Vessel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000055 /* Vessel.swift */; };
+		AABB000000000000000106 /* FerrySchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000056 /* FerrySchedule.swift */; };
+		AABB000000000000000107 /* FerryPrediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000057 /* FerryPrediction.swift */; };
+		AABB000000000000000108 /* PortVehicleData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000058 /* PortVehicleData.swift */; };
+		AABB000000000000000109 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB000000000000000059 /* APIService.swift */; };
+		AABB00000000000000010A /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005A /* LocationService.swift */; };
+		AABB00000000000000010B /* PredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005B /* PredictionService.swift */; };
+		AABB00000000000000010C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005C /* Assets.xcassets */; };
+		AABB000000000000000110 /* ComplicationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005D /* ComplicationProvider.swift */; };
+		AABB000000000000000111 /* ComplicationViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005E /* ComplicationViews.swift */; };
+		BBCC000000000000000100 /* Vessel.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB000000000000000055 /* Vessel.swift */; };
+		BBCC000000000000000101 /* FerrySchedule.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB000000000000000056 /* FerrySchedule.swift */; };
+		BBCC000000000000000102 /* FerryPrediction.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB000000000000000057 /* FerryPrediction.swift */; };
+		BBCC000000000000000103 /* PortVehicleData.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB000000000000000058 /* PortVehicleData.swift */; };
+		BBCC000000000000000104 /* APIService.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB000000000000000059 /* APIService.swift */; };
+		BBCC000000000000000105 /* LocationService.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005A /* LocationService.swift */; };
+		BBCC000000000000000106 /* PredictionService.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005B /* PredictionService.swift */; };
+		BBCC000000000000000107 /* ComplicationProvider.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005D /* ComplicationProvider.swift */; };
+		BBCC000000000000000108 /* ComplicationViews.swift in Sources (widgets) */ = {isa = PBXBuildFile; fileRef = AABB00000000000000005E /* ComplicationViews.swift */; };
+		BBCC00000000000000010C /* Assets.xcassets in Resources (widgets) */ = {isa = PBXBuildFile; fileRef = BBCC00000000000000005C /* Assets.xcassets */; };
+		CCDD000000000000000040 /* NoNikolausWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = BBCC000000000000000040 /* NoNikolausWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		AABB000000000000000040 /* NoNikolausWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoNikolausWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AABB000000000000000050 /* NoNikolausWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NoNikolausWatchApp.swift; path = NoNikolausWatch/NoNikolausWatchApp.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000051 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = NoNikolausWatch/Views/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000052 /* TerminalDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TerminalDetailView.swift; path = NoNikolausWatch/Views/TerminalDetailView.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000053 /* WebcamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WebcamView.swift; path = NoNikolausWatch/Views/WebcamView.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000054 /* WebcamImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WebcamImageView.swift; path = NoNikolausWatch/Views/WebcamImageView.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000055 /* Vessel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Vessel.swift; path = NoNikolausWatch/Models/Vessel.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000056 /* FerrySchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FerrySchedule.swift; path = NoNikolausWatch/Models/FerrySchedule.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000057 /* FerryPrediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = FerryPrediction.swift; path = NoNikolausWatch/Models/FerryPrediction.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000058 /* PortVehicleData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PortVehicleData.swift; path = NoNikolausWatch/Models/PortVehicleData.swift; sourceTree = SOURCE_ROOT; };
+		AABB000000000000000059 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = APIService.swift; path = NoNikolausWatch/Services/APIService.swift; sourceTree = SOURCE_ROOT; };
+		AABB00000000000000005A /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LocationService.swift; path = NoNikolausWatch/Services/LocationService.swift; sourceTree = SOURCE_ROOT; };
+		AABB00000000000000005B /* PredictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PredictionService.swift; path = NoNikolausWatch/Services/PredictionService.swift; sourceTree = SOURCE_ROOT; };
+		AABB00000000000000005C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = NoNikolausWatch/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		AABB00000000000000005D /* ComplicationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ComplicationProvider.swift; path = NoNikolausWatch/Complication/ComplicationProvider.swift; sourceTree = SOURCE_ROOT; };
+		AABB00000000000000005E /* ComplicationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ComplicationViews.swift; path = NoNikolausWatch/Complication/ComplicationViews.swift; sourceTree = SOURCE_ROOT; };
+		BBCC000000000000000040 /* NoNikolausWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NoNikolausWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBCC000000000000000070 /* NoNikolausWidgets/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = NoNikolausWidgets/Info.plist; sourceTree = SOURCE_ROOT; };
+		BBCC00000000000000005C /* NoNikolausWidgets/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = NoNikolausWidgets/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AABB000000000000000015 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBCC000000000000000015 /* Frameworks (widgets) */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AABB000000000000000030 /* root */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000032 /* NoNikolausWatch */,
+				BBCC000000000000000032 /* NoNikolausWidgets */,
+				AABB000000000000000031 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AABB000000000000000031 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000040 /* NoNikolausWatch.app */,
+				BBCC000000000000000040 /* NoNikolausWidgets.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AABB000000000000000032 /* NoNikolausWatch */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000050 /* NoNikolausWatchApp.swift */,
+				AABB000000000000000034 /* Views */,
+				AABB000000000000000033 /* Models */,
+				AABB000000000000000035 /* Services */,
+				AABB000000000000000036 /* Complication */,
+				AABB00000000000000005C /* Assets.xcassets */,
+			);
+			name = NoNikolausWatch;
+			sourceTree = "<group>";
+		};
+		AABB000000000000000033 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000055 /* Vessel.swift */,
+				AABB000000000000000056 /* FerrySchedule.swift */,
+				AABB000000000000000057 /* FerryPrediction.swift */,
+				AABB000000000000000058 /* PortVehicleData.swift */,
+			);
+			name = Models;
+			sourceTree = "<group>";
+		};
+		AABB000000000000000034 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000051 /* ContentView.swift */,
+				AABB000000000000000052 /* TerminalDetailView.swift */,
+				AABB000000000000000053 /* WebcamView.swift */,
+				AABB000000000000000054 /* WebcamImageView.swift */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
+		AABB000000000000000035 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				AABB000000000000000059 /* APIService.swift */,
+				AABB00000000000000005A /* LocationService.swift */,
+				AABB00000000000000005B /* PredictionService.swift */,
+			);
+			name = Services;
+			sourceTree = "<group>";
+		};
+		AABB000000000000000036 /* Complication */ = {
+			isa = PBXGroup;
+			children = (
+				AABB00000000000000005D /* ComplicationProvider.swift */,
+				AABB00000000000000005E /* ComplicationViews.swift */,
+			);
+			name = "Complication (Widget Extension)";
+			sourceTree = "<group>";
+		};
+		BBCC000000000000000032 /* NoNikolausWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				AABB00000000000000005D /* ComplicationProvider.swift */,
+				AABB00000000000000005E /* ComplicationViews.swift */,
+				BBCC00000000000000005C /* Assets.xcassets */,
+				BBCC000000000000000070 /* Info.plist */,
+			);
+			name = NoNikolausWidgets;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AABB000000000000000010 /* NoNikolausWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AABB000000000000000011 /* Build configuration list for PBXNativeTarget "NoNikolausWatch" */;
+			buildPhases = (
+				AABB000000000000000014 /* Sources */,
+				AABB000000000000000015 /* Frameworks */,
+				AABB000000000000000016 /* Resources */,
+				CCDD000000000000000020 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BBCC000000000000000022 /* PBXTargetDependency */,
+			);
+			name = NoNikolausWatch;
+			productName = NoNikolausWatch;
+			productReference = AABB000000000000000040 /* NoNikolausWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BBCC000000000000000010 /* NoNikolausWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BBCC000000000000000011 /* Build configuration list for PBXNativeTarget "NoNikolausWidgets" */;
+			buildPhases = (
+				BBCC000000000000000014 /* Sources (widgets) */,
+				BBCC000000000000000015 /* Frameworks (widgets) */,
+				BBCC000000000000000016 /* Resources (widgets) */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NoNikolausWidgets;
+			productName = NoNikolausWidgets;
+			productReference = BBCC000000000000000040 /* NoNikolausWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AABB000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					AABB000000000000000010 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					BBCC000000000000000010 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AABB000000000000000002 /* Build configuration list for PBXProject "NoNikolaus" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AABB000000000000000030;
+			productRefGroup = AABB000000000000000031 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AABB000000000000000010 /* NoNikolausWatch */,
+				BBCC000000000000000010 /* NoNikolausWidgets */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AABB000000000000000016 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AABB00000000000000010C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBCC000000000000000016 /* Resources (widgets) */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBCC00000000000000010C /* Assets.xcassets in Resources (widgets) */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CCDD000000000000000020 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CCDD000000000000000040 /* NoNikolausWidgets.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AABB000000000000000014 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AABB000000000000000100 /* NoNikolausWatchApp.swift in Sources */,
+				AABB000000000000000101 /* ContentView.swift in Sources */,
+				AABB000000000000000102 /* TerminalDetailView.swift in Sources */,
+				AABB000000000000000103 /* WebcamView.swift in Sources */,
+				AABB000000000000000104 /* WebcamImageView.swift in Sources */,
+				AABB000000000000000105 /* Vessel.swift in Sources */,
+				AABB000000000000000106 /* FerrySchedule.swift in Sources */,
+				AABB000000000000000107 /* FerryPrediction.swift in Sources */,
+				AABB000000000000000108 /* PortVehicleData.swift in Sources */,
+				AABB000000000000000109 /* APIService.swift in Sources */,
+				AABB00000000000000010A /* LocationService.swift in Sources */,
+				AABB00000000000000010B /* PredictionService.swift in Sources */,
+				);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BBCC000000000000000014 /* Sources (widgets) */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBCC000000000000000107 /* ComplicationProvider.swift in Sources (widgets) */,
+				BBCC000000000000000108 /* ComplicationViews.swift in Sources (widgets) */,
+				BBCC000000000000000100 /* Vessel.swift in Sources (widgets) */,
+				BBCC000000000000000101 /* FerrySchedule.swift in Sources (widgets) */,
+				BBCC000000000000000102 /* FerryPrediction.swift in Sources (widgets) */,
+				BBCC000000000000000103 /* PortVehicleData.swift in Sources (widgets) */,
+				BBCC000000000000000104 /* APIService.swift in Sources (widgets) */,
+				BBCC000000000000000105 /* LocationService.swift in Sources (widgets) */,
+				BBCC000000000000000106 /* PredictionService.swift in Sources (widgets) */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		BBCC000000000000000021 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AABB000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BBCC000000000000000010;
+			remoteInfo = NoNikolausWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		BBCC000000000000000022 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BBCC000000000000000010 /* NoNikolausWidgets */;
+			targetProxy = BBCC000000000000000021 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AABB000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		AABB000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
+		AABB000000000000000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UT84YMZ4U;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "No Nikolaus";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to calculate drive time to the nearest terminal.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.andrei.NoNikolaus;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		AABB000000000000000013 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UT84YMZ4U;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "No Nikolaus";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Used to calculate drive time to the nearest terminal.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKWatchOnly = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.andrei.NoNikolaus;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
+		BBCC000000000000000012 /* Debug (widgets) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UT84YMZ4U;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NoNikolausWidgets/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.andrei.NoNikolaus.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Debug;
+		};
+		BBCC000000000000000013 /* Release (widgets) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8UT84YMZ4U;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NoNikolausWidgets/Info.plist;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = me.andrei.NoNikolaus.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 9.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AABB000000000000000002 /* Build configuration list for PBXProject "NoNikolaus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AABB000000000000000003 /* Debug */,
+				AABB000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AABB000000000000000011 /* Build configuration list for PBXNativeTarget "NoNikolausWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AABB000000000000000012 /* Debug */,
+				AABB000000000000000013 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BBCC000000000000000011 /* Build configuration list for PBXNativeTarget "NoNikolausWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BBCC000000000000000012 /* Debug (widgets) */,
+				BBCC000000000000000013 /* Release (widgets) */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = AABB000000000000000001 /* Project object */;
+}

@@ -3,8 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { initFirebase, getLatestVessels } from './firebase.js';
-import { initSchedule } from './schedule.js';
+import { initFirebase, getLatestVessels, getLatestPortVehicleData } from './firebase.js';
+import { initSchedule, getSchedule } from './schedule.js';
 import { handleSSE } from './sseHandler.js';
 import { handleSendPush, handleTripPush, handlePredictionFeedback } from './pushHandler.js';
 import { sendTelegramAlert } from './telegram.js';
@@ -46,10 +46,12 @@ const feedbackLimiter = rateLimit({
 // SSE endpoint for vessel streaming
 app.get('/api/vessels/stream', handleSSE);
 
-// Get latest vessels snapshot (non-streaming)
+// Get latest vessels snapshot (non-streaming) — includes schedule + queue data
 app.get('/api/vessels', (_req, res) => {
   res.json({
     vessels: getLatestVessels(),
+    portVehicleData: getLatestPortVehicleData(),
+    schedule: getSchedule() ?? undefined,
     timestamp: Date.now(),
   });
 });
