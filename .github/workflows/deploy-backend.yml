@@ -33,15 +33,16 @@ jobs:
         working-directory: backend
 
       - name: Copy files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DO_SSH_HOST }}
-          username: ${{ secrets.DO_SSH_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
-          port: ${{ secrets.DO_SSH_PORT || 22 }}
-          source: backend/dist/,backend/package.json,backend/package-lock.json
-          target: /var/www/no-nikolaus
-          strip_components: 1
+        run: |
+          echo "${{ secrets.DO_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          tar -czf - -C backend dist package.json package-lock.json | \
+            ssh -i /tmp/deploy_key \
+                -o StrictHostKeyChecking=no \
+                -p ${{ secrets.DO_SSH_PORT || 22 }} \
+                ${{ secrets.DO_SSH_USERNAME }}@${{ secrets.DO_SSH_HOST }} \
+                "tar -xzf - -C /var/www/no-nikolaus"
+          rm /tmp/deploy_key
 
       - name: Install and restart
         uses: appleboy/ssh-action@v1.2.0
