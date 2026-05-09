@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           port: ${{ secrets.DO_SSH_PORT || 22 }}
           source: backend/dist/,backend/package.json,backend/package-lock.json
-          target: /app
+          target: /var/www/no-nikolaus
           strip_components: 1
 
       - name: Install and restart
@@ -53,6 +53,6 @@ jobs:
           script: |
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-            cd /app && npm ci --omit=dev
+            cd /var/www/no-nikolaus && npm ci --omit=dev
             pm2 restart no-nikolaus-backend || pm2 start dist/index.js --name no-nikolaus-backend
             pm2 save
