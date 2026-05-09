@@ -42,7 +42,6 @@ jobs:
           source: backend/dist/,backend/package.json,backend/package-lock.json
           target: /var/www/no-nikolaus
           strip_components: 1
-          debug: true
 
       - name: Install and restart
         uses: appleboy/ssh-action@v1.2.0
