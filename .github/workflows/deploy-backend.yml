@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "${{ secrets.DO_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
-          tar -czf - -C backend dist package.json package-lock.json | \
+          tar -czf - -C backend dist package.json package-lock.json ecosystem.config.cjs | \
             ssh -i /tmp/deploy_key \
                 -o StrictHostKeyChecking=no \
                 -p ${{ secrets.DO_SSH_PORT || 22 }} \
@@ -55,5 +55,5 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             cd /var/www/no-nikolaus && npm ci --omit=dev
-            pm2 restart no-nikolaus-backend || pm2 start dist/index.js --name no-nikolaus-backend
+            pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
             pm2 save
